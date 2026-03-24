@@ -1,0 +1,2369 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculador Profesional de Cargas Térmicas</title>
+    <!-- Configuración de Tailwind antes de la carga del CDN para evitar ReferenceError -->
+    <script>
+        window.tailwind = {
+            config: {
+                darkMode: 'class',
+                theme: {
+                    extend: {
+                        colors: {
+                            border: "hsl(var(--border))",
+                            background: "hsl(var(--background))",
+                            foreground: "hsl(var(--foreground))",
+                            accent: "#f59e0b",
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Roboto+Condensed:wght@400;700;800&display=swap');
+        
+        :root {
+            --bg-app: #f1f5f9;
+            --bg-surface: #ffffff;
+            --text-primary: #0f172a;
+            --border-default: rgba(0, 0, 0, 0.1);
+            --accent-base: #f59e0b;
+        }
+
+        .dark {
+            --bg-app: #0f172a;
+            --bg-surface: #1e293b;
+            --text-primary: #f8fafc;
+            --border-default: rgba(255, 255, 255, 0.1);
+            --accent-base: #fbbf24;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-primary);
+        }
+
+        .technical-font { font-family: 'Roboto Condensed', sans-serif; }
+
+        .glass-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-default);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="number"], input[type="text"], select {
+            background: var(--bg-app);
+            border: 1px solid var(--border-default);
+            color: var(--text-primary);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 13px;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus { border-color: var(--accent-base); }
+        
+        input:disabled, input[readonly] {
+            opacity: 0.6;
+            cursor: not-allowed;
+            border-style: dashed;
+        }
+
+        .label-tech {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .tab-btn {
+            opacity: 0.5;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .tab-btn.active-verano {
+            opacity: 1;
+            color: #f97316; /* orange-500 */
+            border-bottom-color: #f97316;
+        }
+        .tab-btn.active-invierno {
+            opacity: 1;
+            color: #3b82f6; /* blue-500 */
+            border-bottom-color: #3b82f6;
+        }
+
+        .view-toggle-btn {
+            transition: all 0.3s ease;
+        }
+        .view-toggle-btn.active {
+            background-color: var(--accent-base);
+            color: white;
+            border-color: var(--accent-base);
+        }
+
+        /* Thermal Tab Buttons Specifics (Mejorado) */
+        .tab-btn-t { opacity: 0.6; transition: all 0.3s ease; border-bottom: 3px solid transparent; }
+        .tab-btn-t:hover { opacity: 0.9; background-color: rgba(0,0,0,0.03); }
+        .dark .tab-btn-t:hover { background-color: rgba(255,255,255,0.03); }
+        .tab-btn-t.active-verano { opacity: 1; color: #ea580c; border-bottom-color: #f97316; background-color: #fff7ed; }
+        .dark .tab-btn-t.active-verano { color: #fb923c; background-color: rgba(124, 45, 18, 0.2); }
+        .tab-btn-t.active-invierno { opacity: 1; color: #2563eb; border-bottom-color: #3b82f6; background-color: #eff6ff; }
+        .dark .tab-btn-t.active-invierno { color: #60a5fa; background-color: rgba(30, 58, 138, 0.2); }
+
+        .drag-handle { cursor: grab; opacity: 0.3; transition: opacity 0.2s; font-size: 16px; }
+        .drag-handle:hover { opacity: 1; color: var(--accent-base); }
+        .print-avoid-break { page-break-inside: avoid; }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; color: black; }
+            .glass-card { box-shadow: none; border: 1px solid #ccc; margin-bottom: 20px;}
+            .tab-content { display: block !important; }
+            .thermal-view-section { display: block !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-24 transition-colors duration-300">
+
+    <!-- Notificación -->
+    <div id="toast" class="bg-emerald-600/95 text-white px-6 py-3 rounded-xl text-sm font-semibold hidden shadow-2xl shadow-emerald-500/30 fixed top-4 right-4 z-[100] border border-emerald-500/50 flex items-center gap-2 backdrop-blur-md transition-opacity">
+        ✓ Acción completada
+    </div>
+
+    <!-- Header -->
+    <header class="bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-xl no-print border-b border-amber-500/30">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-500 p-2 rounded-lg text-slate-900">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight technical-font italic uppercase flex items-center gap-2">
+                        HDS Thermal Load Designer
+                        <span id="save-indicator" class="text-[9px] font-normal text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full opacity-0 transition-opacity">Guardado ✓</span>
+                    </h1>
+                    <p class="text-amber-400 font-bold text-[10px] uppercase tracking-widest">Cálculo Normativo (CTE) y Método Simplificado (Alpino)</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-2 items-center">
+                <label class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg text-xs font-bold uppercase transition-all cursor-pointer border border-slate-700 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                    Importar JSON
+                    <input type="file" accept=".json" onchange="importProject(event)" class="hidden">
+                </label>
+                <button onclick="exportProject()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg text-xs font-bold uppercase transition-all border border-slate-700 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    Exportar JSON
+                </button>
+                <div class="w-px h-6 bg-slate-700 mx-1"></div>
+
+                <!-- AUTOSAVE & UNDO/REDO -->
+                <div class="flex items-center gap-1.5 mr-1 text-[9px] text-emerald-400 font-mono uppercase tracking-widest hidden md:flex" title="Guardado automático activo.">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    Auto-Save
+                </div>
+                <div class="flex gap-1 mr-1 border-r border-slate-700 pr-2">
+                    <button onclick="undoAction()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-2 rounded-lg text-sm font-bold transition-all border border-slate-700 flex items-center shadow-lg" title="Deshacer (Ctrl+Z)">↩️</button>
+                    <button onclick="redoAction()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-2 rounded-lg text-sm font-bold transition-all border border-slate-700 flex items-center shadow-lg" title="Rehacer (Ctrl+Y)">↪️</button>
+                </div>
+
+                <button onclick="window.print()" class="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-lg text-xs font-bold uppercase transition-all shadow-lg shadow-red-500/20" title="Imprimir o Guardar como PDF">📄 PDF</button>
+                
+                <!-- WORD EXPORT DROPDOWN -->
+                <div class="relative group">
+                    <button class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg text-xs font-bold uppercase transition-all shadow-lg shadow-blue-500/20 flex items-center gap-1" title="Descargar Informe en Word">📝 Word ▼</button>
+                    <div class="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-xl overflow-hidden hidden group-hover:block z-50">
+                        <button onclick="downloadWordReport('ambos')" class="w-full text-left px-4 py-2 text-xs font-bold text-slate-300 hover:bg-blue-600 hover:text-white transition-colors border-b border-slate-700">Ambos Cálculos</button>
+                        <button onclick="downloadWordReport('detallado')" class="w-full text-left px-4 py-2 text-xs font-bold text-slate-300 hover:bg-blue-600 hover:text-white transition-colors border-b border-slate-700">Solo Detallado</button>
+                        <button onclick="downloadWordReport('simplificado')" class="w-full text-left px-4 py-2 text-xs font-bold text-slate-300 hover:bg-blue-600 hover:text-white transition-colors">Solo Simplificado</button>
+                    </div>
+                </div>
+
+                <button onclick="toggleTheme()" class="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors ml-1" title="Cambiar Tema">🌓</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 mt-8 space-y-8">
+        
+        <!-- Toggle Superior de Metodología de Cálculo -->
+        <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8 no-print">
+            <div class="bg-gray-200 dark:bg-slate-800 p-1 rounded-xl inline-flex shadow-inner">
+                <button onclick="switchThermalMethod('detailed')" id="btn-method-detailed" class="view-toggle-btn active px-6 py-2 rounded-lg text-sm font-bold text-gray-700 dark:text-slate-300">
+                    📊 Cálculo Detallado (Normativo CTE/RITE)
+                </button>
+                <button onclick="switchThermalMethod('simplified')" id="btn-method-simplified" class="view-toggle-btn px-6 py-2 rounded-lg text-sm font-bold text-gray-700 dark:text-slate-300">
+                    ⚡ Cálculo Simplificado (Método Alpino Clima)
+                </button>
+            </div>
+            <button id="btn-simulate" onclick="loadSimulationPlan()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2">
+                🏠 Simular Plano
+            </button>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- SECCIÓN 1: CÁLCULO SIMPLIFICADO (MÉTODO ALPINO CLIMA)     -->
+        <!-- ========================================================= -->
+        <div id="thermal-simplified-section" class="thermal-view-section hidden space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            
+            <div class="glass-card p-8 border-t-4 border-t-blue-500">
+                <div class="flex items-start gap-6 mb-8">
+                    <div class="bg-blue-100 dark:bg-blue-900/30 p-4 rounded-2xl border border-blue-200 dark:border-blue-500/30 shadow-inner flex-shrink-0">
+                        <span class="text-4xl">🏔️</span>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-blue-700 dark:text-blue-400 tracking-tight uppercase">Método Empírico Alpino Clima / Junkers</h2>
+                        <p class="text-gray-600 dark:text-slate-400 text-sm mt-2 leading-relaxed">Este método de estimación rápida es ideal para viviendas o locales sencillos sin la complejidad técnica del CTE. Se basa en una <strong>carga térmica base por m²</strong> corregida por factores de zona climática, orientación solar y nivel de cerramientos exteriores.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    
+                    <!-- Formulario de Entrada Simplificado -->
+                    <div class="lg:col-span-2 bg-gray-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-inner">
+                        <h3 class="text-sm font-bold text-gray-800 dark:text-slate-300 uppercase tracking-widest mb-6 border-b border-gray-200 dark:border-slate-700 pb-2">Parámetros del Recinto</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="label-tech" title="Superficie útil del recinto a climatizar">Superficie a climatizar (m²)</label>
+                                <input type="number" id="simp-area" value="100" oninput="triggerSimplifiedCalculate()" class="w-full font-mono text-lg font-bold text-blue-600 dark:text-blue-400 border border-gray-300 dark:border-slate-600 focus:border-blue-500 bg-white dark:bg-slate-900 p-3 rounded-lg outline-none transition-colors">
+                            </div>
+                            
+                            <div>
+                                <label class="label-tech" title="Determina la carga base en W/m²">Antigüedad / Aislamiento <span class="text-[8px] font-normal normal-case text-slate-400 ml-1">(Ref. CTE DB-HE)</span></label>
+                                <select id="simp-age" onchange="triggerSimplifiedCalculate()" class="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 p-3 rounded-lg text-gray-800 dark:text-slate-200 text-sm font-semibold outline-none focus:border-blue-500 cursor-pointer">
+                                    <option value="nuevo">Vivienda Nueva / Bien Aislada (Post-CTE)</option>
+                                    <option value="medio" selected>Vivienda Media (Aislamiento básico)</option>
+                                    <option value="antiguo">Vivienda Antigua / Sin Aislar (Pre-1980)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="label-tech" title="Factor F1 (Según mapa climático CTE)">Zona Climática <span class="text-[8px] font-normal normal-case text-slate-400 ml-1">(CTE DB-HE)</span></label>
+                                <select id="simp-zone" onchange="triggerSimplifiedCalculate()" class="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 p-3 rounded-lg text-gray-800 dark:text-slate-200 text-sm font-semibold outline-none focus:border-blue-500 cursor-pointer">
+                                    <option value="A">Zona A (Muy cálida en verano / Suave invierno)</option>
+                                    <option value="B" selected>Zona B (Cálida / Mediterráneo Costa)</option>
+                                    <option value="C">Zona C (Templada / Interior-Costa)</option>
+                                    <option value="D">Zona D (Fría en invierno / Mediterráneo Int.)</option>
+                                    <option value="E">Zona E (Muy fría en invierno / Montaña)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="label-tech" title="Factor F2 (Protección solar)">Exposición Solar Principal (Factor F2)</label>
+                                <select id="simp-sun" onchange="triggerSimplifiedCalculate()" class="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 p-3 rounded-lg text-gray-800 dark:text-slate-200 text-sm font-semibold outline-none focus:border-blue-500 cursor-pointer">
+                                    <option value="sol" selected>Exposición normal o Soleada (Sur/Oeste)</option>
+                                    <option value="sombra">En zona de sombra o Norte</option>
+                                </select>
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="label-tech" title="Factor F3 (Disipación térmica)">Paredes al exterior y Cubiertas (Factor F3)</label>
+                                <select id="simp-walls" onchange="triggerSimplifiedCalculate()" class="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-600 p-3 rounded-lg text-gray-800 dark:text-slate-200 text-sm font-semibold outline-none focus:border-blue-500 cursor-pointer">
+                                    <option value="pocas" selected>2 o menos paredes al exterior (Piso intermedio)</option>
+                                    <option value="muchas">Más de 2 paredes al exterior, o bajo cubierta / chalet</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Info Ecuación -->
+                        <div class="mt-6 bg-blue-100/50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-xl text-xs text-gray-600 dark:text-slate-400 font-mono">
+                            <span class="font-bold text-blue-600 dark:text-blue-400">Ecuación Base:</span> Q = Superficie(m²) × Carga Base(W/m²) × F1(Zona) × F2(Sombra) × F3(Paredes) × 1.1(Margen de Seguridad)
+                        </div>
+                    </div>
+
+                    <!-- Tarjetas de Resultados Simplificados -->
+                    <div class="space-y-6">
+                        <!-- Invierno -->
+                        <div class="bg-white dark:bg-slate-800 border-l-4 border-l-blue-500 border-y border-r border-gray-200 dark:border-slate-700 p-6 rounded-2xl shadow-lg relative overflow-hidden">
+                            <div class="absolute -right-4 -top-4 opacity-5 dark:opacity-10 text-blue-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-32 w-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.25a.75.75 0 01.75.75v3.13l1.83-1.83a.75.75 0 111.06 1.06L13.12 7.88A.75.75 0 0112 8.25a.75.75 0 01-1.12-.22L8.36 5.51a.75.75 0 011.06-1.06l1.83 1.83V3a.75.75 0 01.75-.75z"/></svg>
+                            </div>
+                            <h4 class="text-blue-600 dark:text-blue-400 font-black uppercase text-xs mb-2 tracking-widest relative z-10">Potencia de Calefacción</h4>
+                            <p class="text-[10px] text-gray-500 dark:text-slate-500 mb-4 relative z-10">Cálculo estimado + 10% margen caldera.</p>
+                            
+                            <div class="relative z-10">
+                                <div id="simp-res-heat-w" class="text-4xl font-black font-mono text-gray-800 dark:text-white tracking-tighter">0 <span class="text-sm font-normal text-gray-500 dark:text-slate-400">W</span></div>
+                                <div id="simp-res-heat-kcal" class="text-sm font-bold text-gray-600 dark:text-slate-400 font-mono mt-1">0 kcal/h</div>
+                            </div>
+                        </div>
+
+                        <!-- Verano -->
+                        <div class="bg-white dark:bg-slate-800 border-l-4 border-l-orange-500 border-y border-r border-gray-200 dark:border-slate-700 p-6 rounded-2xl shadow-lg relative overflow-hidden">
+                            <div class="absolute -right-4 -top-4 opacity-5 dark:opacity-10 text-orange-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-32 w-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z"/></svg>
+                            </div>
+                            <h4 class="text-orange-600 dark:text-orange-500 font-black uppercase text-xs mb-2 tracking-widest relative z-10">Potencia de Refrigeración</h4>
+                            <p class="text-[10px] text-gray-500 dark:text-slate-500 mb-4 relative z-10">Cálculo estimado + 10% margen equipo.</p>
+                            
+                            <div class="relative z-10">
+                                <div id="simp-res-cool-w" class="text-4xl font-black font-mono text-gray-800 dark:text-white tracking-tighter">0 <span class="text-sm font-normal text-gray-500 dark:text-slate-400">W</span></div>
+                                <div id="simp-res-cool-fg" class="text-sm font-bold text-gray-600 dark:text-slate-400 font-mono mt-1">0 fg/h</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- SECCIÓN 2: CÁLCULO DETALLADO (NORMATIVO CTE / RITE)       -->
+        <!-- ========================================================= -->
+        <div id="thermal-detailed-section" class="thermal-view-section block space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            
+            <!-- Panel Didáctico Ecuaciones -->
+            <div class="mb-8 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg no-print print-avoid-break">
+                <div class="flex items-center justify-between mb-4 cursor-pointer group" onclick="toggleVisibility('thermal-panel-content', this)">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">🎓</span>
+                        <h3 class="text-blue-400 font-bold text-sm uppercase tracking-widest group-hover:text-blue-300 transition-colors">Panel Didáctico: Ecuaciones Normativas (CTE / RITE)</h3>
+                    </div>
+                    <button class="text-slate-400 hover:text-white transition-transform duration-200 transform rotate-180">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </button>
+                </div>
+                <div id="thermal-panel-content" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 transition-all duration-300">
+                    <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 hover:border-blue-500/50 transition-colors">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold mb-2">Transmisión (Invierno)</p>
+                        <div class="font-mono text-sm text-emerald-400 mb-3 bg-slate-950 p-2.5 rounded text-center shadow-inner border border-slate-800">Q = U · A · ΔT</div>
+                        <p class="text-[9px] text-slate-500 leading-relaxed">Cálculo estático para el escenario crítico nocturno. El coeficiente <strong class="text-slate-300">U</strong> debe acotarse a límites de <strong class="text-emerald-400">CTE DB-HE1</strong>.</p>
+                    </div>
+                    <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 hover:border-blue-500/50 transition-colors">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold mb-2">Transmisión (Verano)</p>
+                        <div class="font-mono text-sm text-amber-400 mb-3 bg-slate-950 p-2.5 rounded text-center shadow-inner border border-slate-800">Q = U · A · CLTD</div>
+                        <p class="text-[9px] text-slate-500 leading-relaxed">Cálculo dinámico. El <strong class="text-amber-400">CLTD</strong> (Cooling Load Temp Difference) corrige el salto térmico por absorción solar e inercia térmica de muros.</p>
+                    </div>
+                    <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 hover:border-blue-500/50 transition-colors">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold mb-2">Ventilación Sensible</p>
+                        <div class="font-mono text-sm text-emerald-400 mb-3 bg-slate-950 p-2.5 rounded text-center shadow-inner border border-slate-800 tracking-tighter">Q = V · 0.34 · ΔT</div>
+                        <p class="text-[9px] text-slate-500 leading-relaxed"><strong class="text-slate-300">V</strong> es caudal exigido según <strong class="text-emerald-400">RITE (calidad IDA) o CTE DB-HS3</strong>. El 0.34 ajusta densidad y calor específico.</p>
+                    </div>
+                    <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 hover:border-blue-500/50 transition-colors">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold mb-2">Radiación Solar Huecos</p>
+                        <div class="font-mono text-sm text-amber-400 mb-3 bg-slate-950 p-2.5 rounded text-center shadow-inner border border-slate-800">Q = S · R · F</div>
+                        <p class="text-[9px] text-slate-500 leading-relaxed"><strong class="text-slate-300">S</strong>: Superficie. <strong class="text-slate-300">R</strong>: Radiación max orientación. <strong class="text-slate-300">F</strong>: Factor solar de atenuación exigido por <strong class="text-emerald-400">CTE DB-HE</strong>.</p>
+                    </div>
+                    <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 hover:border-blue-500/50 transition-colors">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold mb-2">Psicrometría (FCS)</p>
+                        <div class="font-mono text-sm text-blue-400 mb-3 bg-slate-950 p-2.5 rounded text-center shadow-inner border border-slate-800">FCS = Qs / (Qs+Ql)</div>
+                        <p class="text-[9px] text-slate-500 leading-relaxed">El Factor de Calor Sensible dicta la recta de proceso en el <strong class="text-slate-300">Ábaco Psicrométrico</strong> para dimensionar máquinas RITE.</p>
+                    </div>
+                    <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 hover:border-cyan-500/50 transition-colors shadow-[0_0_10px_rgba(6,182,212,0.05)] relative overflow-hidden">
+                        <p class="text-[10px] text-cyan-400 uppercase font-bold mb-2">Caudal Impulsión (Dimens.)</p>
+                        <div class="font-mono text-sm text-cyan-300 mb-3 bg-slate-950 p-2.5 rounded text-center shadow-inner border border-cyan-900/50 tracking-tighter">V = Qs / [0.34·(T_loc-T_imp)]</div>
+                        <p class="text-[9px] text-slate-500 leading-relaxed">Caudal <strong class="text-slate-300">V (m³/h)</strong> necesario para abatir la carga sensible total <strong class="text-slate-300">Qs</strong>, extraída de la Pág 11 del Tratado Técnico.</p>
+                    </div>
+                    <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 hover:border-emerald-500/50 transition-colors shadow-[0_0_10px_rgba(16,185,129,0.05)] relative overflow-hidden">
+                        <div class="absolute -right-6 top-2 bg-emerald-600 text-white text-[9px] font-bold px-6 py-1 rotate-45 shadow-md">CTE</div>
+                        <p class="text-[10px] text-emerald-400 uppercase font-bold mb-2 pr-6">Aerotermia Renovable</p>
+                        <div class="font-mono text-sm text-emerald-300 mb-3 bg-slate-950 p-2.5 rounded text-center shadow-inner border border-emerald-900/50 tracking-tighter">E_res = Q_usable · (1 - 1/SPF)</div>
+                        <p class="text-[9px] text-slate-500 leading-relaxed">Justificación <strong class="text-emerald-400">CTE DB-HE0</strong>. La máquina aporta energía renovable gratuita si su rendimiento <strong class="text-slate-300">SPF > 2.5</strong>.</p>
+                    </div>
+                    <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 hover:border-emerald-500/50 transition-colors shadow-[0_0_10px_rgba(16,185,129,0.05)] relative overflow-hidden">
+                        <div class="absolute -right-6 top-2 bg-emerald-600 text-white text-[9px] font-bold px-6 py-1 rotate-45 shadow-md">RITE</div>
+                        <p class="text-[10px] text-emerald-400 uppercase font-bold mb-2 pr-6">Eficiencia (SCOP / SPF)</p>
+                        <div class="font-mono text-sm text-emerald-300 mb-3 bg-slate-950 p-2.5 rounded text-center shadow-inner border border-emerald-900/50 tracking-tighter">SCOP = Q_térmico / W_eléctrico</div>
+                        <p class="text-[9px] text-slate-500 leading-relaxed">Rendimiento estacional. <strong class="text-emerald-400">A mayor SCOP, mayor ahorro</strong>.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 0. VISOR DE PLANOS -->
+            <section class="glass-card p-6 print-avoid-break mb-8 no-print">
+                <div class="flex justify-between items-center mb-4 cursor-pointer group" onclick="toggleVisibility('plano-viewer-content', this)">
+                    <h2 class="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-indigo-500 group-hover:text-indigo-400 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        0. Plano de Estudio (Visor Interactivo)
+                    </h2>
+                    <button class="text-slate-400 hover:text-indigo-500 transition-transform duration-200 transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </button>
+                </div>
+                <div id="plano-viewer-content" class="transition-all duration-300">
+                    <div id="drop-zone" class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-800/50 flex flex-col items-center justify-center h-80 relative overflow-hidden group transition-colors hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <div id="drop-msg" class="text-slate-400 text-sm font-bold flex flex-col items-center pointer-events-none absolute z-10 transition-opacity">
+                            <span class="mb-2 text-3xl">📥</span>
+                            <span>Arrastra el plano de la vivienda aquí o haz clic</span>
+                            <span class="text-xs font-normal mt-1 text-slate-500">(Formatos soportados: JPG, PNG)</span>
+                        </div>
+                        <input type="file" id="plano-upload" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" onchange="handleImageUpload(event)">
+                        
+                        <!-- Contenedor de la imagen con pan y zoom -->
+                        <div id="image-container" class="absolute inset-0 hidden z-30 touch-none cursor-grab active:cursor-grabbing bg-slate-200 dark:bg-slate-900">
+                            <img id="plano-img" src="" alt="Plano" class="w-full h-full object-contain origin-center transition-transform duration-75 select-none pointer-events-none">
+                        </div>
+
+                        <!-- Toolbar flotante -->
+                        <div id="plano-toolbar" class="absolute bottom-4 right-4 flex gap-2 hidden z-40">
+                            <button onclick="zoomPlano(0.1)" class="bg-slate-800/90 text-white w-8 h-8 rounded shadow-lg hover:bg-indigo-600 backdrop-blur border border-slate-600 flex items-center justify-center font-bold" title="Acercar (Zoom In)">+</button>
+                            <button onclick="zoomPlano(-0.1)" class="bg-slate-800/90 text-white w-8 h-8 rounded shadow-lg hover:bg-indigo-600 backdrop-blur border border-slate-600 flex items-center justify-center font-bold" title="Alejar (Zoom Out)">-</button>
+                            <button onclick="resetPlano()" class="bg-slate-800/90 text-white px-3 h-8 rounded shadow-lg hover:bg-indigo-600 backdrop-blur border border-slate-600 flex items-center justify-center text-xs font-bold uppercase tracking-wider" title="Ajustar a la pantalla">Ajustar</button>
+                            <div class="w-px h-8 bg-slate-600 mx-1"></div>
+                            <button onclick="removePlano()" class="bg-red-600/90 text-white px-3 h-8 rounded shadow-lg hover:bg-red-500 backdrop-blur border border-red-500/50 flex items-center justify-center text-xs font-bold uppercase tracking-wider" title="Eliminar Plano">Quitar</button>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-slate-500 mt-2 italic text-center">Usa la rueda del ratón para hacer zoom y arrastra con el ratón para desplazarte por el plano.</p>
+                </div>
+            </section>
+
+            <!-- 1. CONDICIONES DE DISEÑO -->
+            <section class="glass-card p-6 print-avoid-break">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 cursor-pointer group" onclick="toggleVisibility('condiciones-content', this)">
+                    <h2 class="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-amber-500 group-hover:text-amber-400 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>
+                        1. Condiciones de Diseño (Estudio Normativo)
+                    </h2>
+                    <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                        <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-2 rounded-lg border border-slate-200 dark:border-slate-700" onclick="event.stopPropagation()">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest" title="Cargar datos climáticos normativos">Provincia:</label>
+                            <select id="proj-provincia" onchange="loadProvinciaData()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-xs font-bold outline-none focus:border-amber-500 text-slate-800 dark:text-slate-200">
+                                <option value="">Personalizada...</option>
+                                <optgroup label="Andalucía">
+                                    <option value="malaga">Málaga</option>
+                                    <option value="almeria">Almería</option>
+                                    <option value="cadiz">Cádiz</option>
+                                    <option value="cordoba">Córdoba</option>
+                                    <option value="granada">Granada</option>
+                                    <option value="huelva">Huelva</option>
+                                    <option value="jaen">Jaén</option>
+                                    <option value="sevilla">Sevilla</option>
+                                </optgroup>
+                                <optgroup label="Resto de España (Principales)">
+                                    <option value="albacete">Albacete</option>
+                                    <option value="alicante">Alicante</option>
+                                    <option value="badajoz">Badajoz</option>
+                                    <option value="barcelona">Barcelona</option>
+                                    <option value="bilbao">Bilbao</option>
+                                    <option value="burgos">Burgos</option>
+                                    <option value="caceres">Cáceres</option>
+                                    <option value="castellon">Castellón</option>
+                                    <option value="ciudadreal">Ciudad Real</option>
+                                    <option value="coruna">A Coruña</option>
+                                    <option value="cuenca">Cuenca</option>
+                                    <option value="girona">Girona</option>
+                                    <option value="guadalajara">Guadalajara</option>
+                                    <option value="huesca">Huesca</option>
+                                    <option value="leon">León</option>
+                                    <option value="lleida">Lleida</option>
+                                    <option value="logrono">Logroño</option>
+                                    <option value="lugo">Lugo</option>
+                                    <option value="madrid">Madrid</option>
+                                    <option value="murcia">Murcia</option>
+                                    <option value="ourense">Ourense</option>
+                                    <option value="oviedo">Oviedo (Asturias)</option>
+                                    <option value="palencia">Palencia</option>
+                                    <option value="palma">Palma de Mallorca</option>
+                                    <option value="pamplona">Pamplona</option>
+                                    <option value="pontevedra">Pontevedra</option>
+                                    <option value="salamanca">Salamanca</option>
+                                    <option value="sansebastian">San Sebastián</option>
+                                    <option value="santander">Santander (Cant.)</option>
+                                    <option value="segovia">Segovia</option>
+                                    <option value="soria">Soria</option>
+                                    <option value="tarragona">Tarragona</option>
+                                    <option value="teruel">Teruel</option>
+                                    <option value="toledo">Toledo</option>
+                                    <option value="valencia">Valencia</option>
+                                    <option value="valladolid">Valladolid</option>
+                                    <option value="vitoria">Vitoria</option>
+                                    <option value="zamora">Zamora</option>
+                                    <option value="zaragoza">Zaragoza</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-2 rounded-lg border border-slate-200 dark:border-slate-700" onclick="event.stopPropagation()">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest" title="Ajusta la densidad del aire en el cálculo térmico (psicrometría)">Altitud (msnm):</label>
+                            <input type="number" id="proj-alt" value="0" step="50" oninput="triggerCalculate()" class="w-16 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-xs font-mono text-center outline-none focus:border-amber-500 text-slate-800 dark:text-slate-200" title="Corrige la densidad del aire para caudales">
+                        </div>
+                        <button class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-transform duration-200 transform">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="condiciones-content" class="grid grid-cols-1 md:grid-cols-2 gap-6 transition-all duration-300">
+                    <!-- Verano -->
+                    <div class="space-y-4 p-5 bg-orange-500/5 rounded-xl border border-orange-500/20">
+                        <h3 class="text-xs font-black text-orange-500 uppercase border-b border-orange-500/20 pb-2 mb-4">Refrigeración (Verano)</h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="label-tech" title="Temperatura seca exterior de cálculo según norma UNE 100014">T. Ext. Diseño (°C) <span class="text-[8px] font-normal normal-case text-slate-400 ml-1">(UNE 100014)</span></label>
+                                <input type="number" id="v-ext-t" value="34" oninput="triggerCalculate()" class="text-orange-500 font-bold">
+                            </div>
+                            <div>
+                                <label class="label-tech" title="RITE IT 1.1.4.1.2: Condiciones interiores recomendadas en época de refrigeración (23-25°C)">T. Int. Consigna (°C) <span class="text-[8px] font-normal normal-case text-slate-400 ml-1">(RITE IT 1.1.4)</span></label>
+                                <input type="number" id="v-int-t" value="25" oninput="triggerCalculate()">
+                            </div>
+                            <div>
+                                <label class="label-tech" title="RITE IT 1.1.4.1.2: Diferencia de humedad específica según humedad relativa del local (45-60%)">Δw Humedad (g/kg) <span class="text-[8px] font-normal normal-case text-slate-400 ml-1">(RITE IT 1.1.4)</span></label>
+                                <input type="number" id="v-dw" value="5" step="0.1" oninput="triggerCalculate()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Invierno -->
+                    <div class="space-y-4 p-5 bg-blue-500/5 rounded-xl border border-blue-500/20">
+                        <h3 class="text-xs font-black text-blue-500 uppercase border-b border-blue-500/20 pb-2 mb-4">Calefacción (Invierno)</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="label-tech" title="Temperatura seca exterior de cálculo según norma UNE 100014">T. Ext. Diseño (°C) <span class="text-[8px] font-normal normal-case text-slate-400 ml-1">(UNE 100014)</span></label>
+                                <input type="number" id="i-ext-t" value="2" oninput="triggerCalculate()" class="text-blue-500 font-bold">
+                            </div>
+                            <div>
+                                <label class="label-tech" title="RITE IT 1.1.4.1.2: Condiciones interiores recomendadas en época de calefacción (21-23°C)">T. Int. Consigna (°C) <span class="text-[8px] font-normal normal-case text-slate-400 ml-1">(RITE IT 1.1.4)</span></label>
+                                <input type="number" id="i-int-t" value="21" oninput="triggerCalculate()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. TABLAS DE CARGAS (TABS DIVIDIDAS) -->
+            <section class="glass-card overflow-hidden">
+                <!-- Navegación Tabs -->
+                <div class="flex border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/80 no-print divide-x divide-slate-200 dark:divide-slate-700">
+                    <button onclick="switchTab('verano')" id="btn-verano" class="tab-btn-t active-verano flex-1 py-4 text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-colors">
+                        ☀️ Cargas de Verano
+                    </button>
+                    <button onclick="switchTab('invierno')" id="btn-invierno" class="tab-btn-t flex-1 py-4 text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-colors">
+                        ❄️ Cargas de Invierno
+                    </button>
+                </div>
+
+                <!-- TAB: VERANO -->
+                <div id="tab-verano" class="tab-content block">
+                    <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4 bg-orange-50 dark:bg-orange-900/10">
+                        <p class="text-xs text-orange-600 dark:text-orange-400 font-semibold">Desglose normativo de componentes. Se diferencia Carga Sensible de Carga Latente.</p>
+                        <div class="flex gap-2 no-print shrink-0 items-center">
+                            <button onclick="confirmReset('verano')" class="text-[10px] font-bold uppercase px-3 py-2 bg-red-500/10 text-red-500 rounded hover:bg-red-500 hover:text-white transition-all border border-red-200 dark:border-red-900/50">Vaciar Tabla</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[850px]">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                                <tr>
+                                    <th class="p-3 border-b dark:border-slate-700">Elemento</th>
+                                    <th class="p-3 border-b dark:border-slate-700 w-48 text-center">Tipo de Carga</th>
+                                    <th class="p-3 border-b dark:border-slate-700 w-16 text-center">Orient.</th>
+                                    <th class="p-3 border-b dark:border-slate-700 w-24 text-center">Cant/Área</th>
+                                    <th class="p-3 border-b dark:border-slate-700 w-24 text-center" title="Coeficientes sujetos a límites del CTE DB-HE1 (Ej. U_muro < 0.41)">U/Irr/W_s <span class="text-[8px] block normal-case font-normal text-slate-400 mt-1">(CTE DB-HE)</span></th>
+                                    <th class="p-3 border-b dark:border-slate-700 w-24 text-center" title="Diferencia de temperatura, CLTD (Inercia térmica) o Factor Solar">CLTD/ΔT/FS <span class="text-[8px] block normal-case font-normal text-slate-400 mt-1">(K / - )</span></th>
+                                    <th class="p-3 border-b dark:border-slate-700 text-right w-28 bg-orange-50/50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400">Sensible (W)</th>
+                                    <th class="p-3 border-b dark:border-slate-700 text-right w-28 bg-teal-50/50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400">Latente (W)</th>
+                                    <th class="p-3 border-b dark:border-slate-700 w-10 no-print"></th>
+                                </tr>
+                            </thead>
+                            
+                            <!-- Grupo 1: Opacos -->
+                            <tbody class="group-header">
+                                <tr class="bg-yellow-100 dark:bg-yellow-500/10 border-y border-yellow-300 dark:border-yellow-500/30">
+                                    <td colspan="9" class="p-2 text-center text-[11px] font-black uppercase text-yellow-700 dark:text-yellow-500 tracking-[0.2em]">▼ Cargas Térmicas Exteriores ▼</td>
+                                </tr>
+                                <tr class="bg-gray-100 dark:bg-slate-800/80 cursor-pointer group" onclick="toggleVisibility('tbody-v-opacos', this)">
+                                    <td colspan="9" class="p-3 text-[10px] font-black uppercase text-yellow-700 dark:text-yellow-400 tracking-widest border-b border-gray-300 dark:border-slate-700">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                                <span>1. Transmisión Opacos y Puentes Térmicos <span class="text-[8px] text-emerald-600 dark:text-emerald-400/80 lowercase italic font-normal ml-2 tracking-normal">(CTE DB-HE1)</span></span>
+                                            </div>
+                                            <div class="flex gap-1 no-print" onclick="event.stopPropagation()">
+                                                <button onclick="addRowVerano('Fachada Exterior', 'opaco', 15, 0.41, 15); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-yellow-400 hover:text-yellow-900 transition-colors">+ Fachada</button>
+                                                <button onclick="addRowVerano('Suelo', 'opaco', 20, 0.45, 10); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-yellow-400 hover:text-yellow-900 transition-colors">+ Suelo</button>
+                                                <button onclick="addRowVerano('Cubierta', 'opaco', 20, 0.35, 24); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-yellow-400 hover:text-yellow-900 transition-colors">+ Cubierta</button>
+                                                <button onclick="addRowVerano('Puente Térmico', 'opaco', 5, 1.2, 15); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-yellow-400 hover:text-yellow-900 transition-colors">+ P. térmico</button>
+                                                <button onclick="addRowVerano('Libre', 'opaco', 1, 0, 0); saveStateToHistory();" class="text-[9px] bg-slate-300 dark:bg-slate-600 text-slate-800 dark:text-slate-200 px-2 py-1 rounded hover:bg-slate-400 transition-colors tracking-tighter">✎ Libre</button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tbody id="tbody-v-opacos" class="text-sm"></tbody>
+
+                            <!-- Grupo 2: Huecos -->
+                            <tbody class="group-header">
+                                <tr class="bg-gray-100 dark:bg-slate-800/80 cursor-pointer group" onclick="toggleVisibility('tbody-v-huecos', this)">
+                                    <td colspan="9" class="p-3 text-[10px] font-black uppercase text-yellow-700 dark:text-yellow-400 tracking-widest border-b border-gray-300 dark:border-slate-700">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                                <span>2. Transmisión Semitransparentes y Radiación <span class="text-[8px] text-emerald-600 dark:text-emerald-400/80 lowercase italic font-normal ml-2 tracking-normal">(CTE DB-HE1)</span></span>
+                                            </div>
+                                            <div class="flex gap-1 no-print" onclick="event.stopPropagation()">
+                                                <button onclick="addRowVerano('Ventana Climalit', 'vidrio_trans', 4, 2.7, 0); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-yellow-400 hover:text-yellow-900 transition-colors">+ Climalit</button>
+                                                <button onclick="addRowVerano('Radiación Vidrio', 'vidrio_rad', 4, 350, 0.45); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-yellow-400 hover:text-yellow-900 transition-colors">+ Radiación</button>
+                                                <button onclick="addRowVerano('Ventana Doble', 'vidrio_trans', 4, 2.8, 0); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-yellow-400 hover:text-yellow-900 transition-colors">+ Doble</button>
+                                                <button onclick="addRowVerano('Libre', 'vidrio_trans', 1, 0, 0); saveStateToHistory();" class="text-[9px] bg-slate-300 dark:bg-slate-600 text-slate-800 dark:text-slate-200 px-2 py-1 rounded hover:bg-slate-400 transition-colors tracking-tighter">✎ Libre</button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tbody id="tbody-v-huecos" class="text-sm"></tbody>
+
+                            <!-- Grupo 3: Ventilación -->
+                            <tbody class="group-header">
+                                <tr class="bg-gray-100 dark:bg-slate-800/80 cursor-pointer group" onclick="toggleVisibility('tbody-v-vent', this)">
+                                    <td colspan="9" class="p-3 text-[10px] font-black uppercase text-yellow-700 dark:text-yellow-400 tracking-widest border-b border-gray-300 dark:border-slate-700">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                                <span>3. Ventilación e Infiltración <span class="text-[8px] text-emerald-600 dark:text-emerald-400/80 lowercase italic font-normal ml-2 tracking-normal">(RITE IDA)</span></span>
+                                            </div>
+                                            <div class="flex gap-1 no-print" onclick="event.stopPropagation()">
+                                                <button onclick="addRowVerano('Infiltración Latente', 'ventilacion', 50, 0, 0.84); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-yellow-400 hover:text-yellow-900 transition-colors">+ Latente</button>
+                                                <button onclick="addRowVerano('Infiltración Sensible', 'ventilacion', 50, 0.34, 0); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-yellow-400 hover:text-yellow-900 transition-colors">+ Sensible</button>
+                                                <button onclick="addRowVerano('Ventilación Lat+Sens', 'ventilacion', 90, 0.34, 0.84); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-yellow-400 hover:text-yellow-900 transition-colors">+ Lat+Sens</button>
+                                                <button onclick="addRowVerano('Libre', 'ventilacion', 1, 0, 0); saveStateToHistory();" class="text-[9px] bg-slate-300 dark:bg-slate-600 text-slate-800 dark:text-slate-200 px-2 py-1 rounded hover:bg-slate-400 transition-colors tracking-tighter">✎ Libre</button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tbody id="tbody-v-vent" class="text-sm"></tbody>
+
+                            <!-- Grupo 4: Interiores -->
+                            <tbody class="group-header">
+                                <tr class="bg-orange-100 dark:bg-orange-500/10 border-y border-orange-300 dark:border-orange-500/30">
+                                    <td colspan="9" class="p-2 text-center text-[11px] font-black uppercase text-orange-700 dark:text-orange-500 tracking-[0.2em]">▼ Cargas Térmicas Interiores ▼</td>
+                                </tr>
+                                <tr class="bg-gray-100 dark:bg-slate-800/80 cursor-pointer group" onclick="toggleVisibility('tbody-v-int', this)">
+                                    <td colspan="9" class="p-3 text-[10px] font-black uppercase text-orange-700 dark:text-orange-400 tracking-widest border-b border-gray-300 dark:border-slate-700">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                                <span>4. Ocupantes, Iluminación, Equipos</span>
+                                            </div>
+                                            <div class="flex gap-1 no-print" onclick="event.stopPropagation()">
+                                                <button onclick="addRowVerano('Ocupantes Latentes', 'personas', 2, 0, 55); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-orange-400 hover:text-orange-900 transition-colors">+ Ocup. latentes</button>
+                                                <button onclick="addRowVerano('Ocupantes Sensibles', 'personas', 2, 75, 0); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-orange-400 hover:text-orange-900 transition-colors">+ Ocup. sensibles</button>
+                                                <button onclick="addRowVerano('Iluminación LED', 'equipos', 20, 5, 0); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-orange-400 hover:text-orange-900 transition-colors">+ Ilum. LED</button>
+                                                <button onclick="addRowVerano('Equipos', 'equipos', 15, 15, 0); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-orange-400 hover:text-orange-900 transition-colors">+ Equipos</button>
+                                                <button onclick="addRowVerano('Libre', 'equipos', 1, 0, 0); saveStateToHistory();" class="text-[9px] bg-slate-300 dark:bg-slate-600 text-slate-800 dark:text-slate-200 px-2 py-1 rounded hover:bg-slate-400 transition-colors tracking-tighter">✎ Libre</button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tbody id="tbody-v-int" class="text-sm"></tbody>
+
+                            <tfoot class="bg-slate-900 text-white font-bold technical-font">
+                                <tr>
+                                    <td colspan="6" class="p-4 text-right uppercase tracking-widest text-slate-400">Totales Verano:</td>
+                                    <td id="tot-v-sens" class="p-4 text-right text-orange-400 text-lg">0 W</td>
+                                    <td id="tot-v-lat" class="p-4 text-right text-teal-400 text-lg">0 W</td>
+                                    <td class="no-print"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB: INVIERNO -->
+                <div id="tab-invierno" class="tab-content hidden">
+                    <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4 bg-blue-50 dark:bg-blue-900/10">
+                        <p class="text-xs text-blue-600 dark:text-blue-400 font-semibold">Cálculo de pérdidas térmicas. Soporta espacios no calefactados con ΔT manual.</p>
+                        <div class="flex gap-2 no-print shrink-0 items-center">
+                            <button onclick="confirmReset('invierno')" class="text-[10px] font-bold uppercase px-3 py-2 bg-red-500/10 text-red-500 rounded hover:bg-red-500 hover:text-white transition-all border border-red-200 dark:border-red-900/50">Vaciar Tabla</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[750px]">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                                <tr>
+                                    <th class="p-3 border-b dark:border-slate-700">Elemento</th>
+                                    <th class="p-3 border-b dark:border-slate-700 w-56 text-center">Tipo de Pérdida</th>
+                                    <th class="p-3 border-b dark:border-slate-700 w-16 text-center">Orient.</th>
+                                    <th class="p-3 border-b dark:border-slate-700 w-28 text-center">Área / Caudal</th>
+                                    <th class="p-3 border-b dark:border-slate-700 w-28 text-center" title="Transmitancia U según límites CTE DB-HE1">U / Coef <span class="text-[8px] block normal-case font-normal text-slate-400 mt-1">(W/m²K)</span></th>
+                                    <th class="p-3 border-b dark:border-slate-700 w-28 text-center">ΔT (K)</th>
+                                    <th class="p-3 border-b dark:border-slate-700 text-right w-36 bg-blue-50/50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400">Pérdida Sens. (W)</th>
+                                    <th class="p-3 border-b dark:border-slate-700 w-10 no-print"></th>
+                                </tr>
+                            </thead>
+
+                            <!-- Grupo 1: Opacos -->
+                            <tbody class="group-header">
+                                <tr class="bg-blue-100 dark:bg-blue-500/10 border-y border-blue-300 dark:border-blue-500/30">
+                                    <td colspan="8" class="p-2 text-center text-[11px] font-black uppercase text-blue-700 dark:text-blue-500 tracking-[0.2em]">▼ Cargas Térmicas Exteriores ▼</td>
+                                </tr>
+                                <tr class="bg-gray-100 dark:bg-slate-800/80 cursor-pointer group" onclick="toggleVisibility('tbody-i-opacos', this)">
+                                    <td colspan="8" class="p-3 text-[10px] font-black uppercase text-blue-700 dark:text-blue-400 tracking-widest border-b border-gray-300 dark:border-slate-700">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                                <span>1. Transmisión Opacos y Puentes Térmicos <span class="text-[8px] text-emerald-600 dark:text-emerald-400/80 lowercase italic font-normal ml-2 tracking-normal">(CTE DB-HE1)</span></span>
+                                            </div>
+                                            <div class="flex gap-1 no-print" onclick="event.stopPropagation()">
+                                                <button onclick="addRowInvierno('Fachada Exterior', 'transmision_ext', 15, 0.41, 19); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-blue-400 hover:text-blue-900 transition-colors">+ Fachada</button>
+                                                <button onclick="addRowInvierno('Suelo', 'transmision_ext', 20, 0.45, 10); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-blue-400 hover:text-blue-900 transition-colors">+ Suelo</button>
+                                                <button onclick="addRowInvierno('Cubierta', 'transmision_ext', 20, 0.35, 19); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-blue-400 hover:text-blue-900 transition-colors">+ Cubierta</button>
+                                                <button onclick="addRowInvierno('Puente Térmico', 'transmision_ext', 5, 1.2, 19); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-blue-400 hover:text-blue-900 transition-colors">+ P. térmico</button>
+                                                <button onclick="addRowInvierno('Libre', 'transmision_ext', 1, 0, 0); saveStateToHistory();" class="text-[9px] bg-slate-300 dark:bg-slate-600 text-slate-800 dark:text-slate-200 px-2 py-1 rounded hover:bg-slate-400 transition-colors tracking-tighter">✎ Libre</button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tbody id="tbody-i-opacos" class="text-sm"></tbody>
+
+                            <!-- Grupo 2: Huecos -->
+                            <tbody class="group-header">
+                                <tr class="bg-gray-100 dark:bg-slate-800/80 cursor-pointer group" onclick="toggleVisibility('tbody-i-huecos', this)">
+                                    <td colspan="8" class="p-3 text-[10px] font-black uppercase text-blue-700 dark:text-blue-400 tracking-widest border-b border-gray-300 dark:border-slate-700">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                                <span>2. Transmisión Semitransparentes <span class="text-[8px] text-emerald-600 dark:text-emerald-400/80 lowercase italic font-normal ml-2 tracking-normal">(CTE DB-HE1)</span></span>
+                                            </div>
+                                            <div class="flex gap-1 no-print" onclick="event.stopPropagation()">
+                                                <button onclick="addRowInvierno('Ventana Climalit', 'transmision_ext', 4, 2.7, 19); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-blue-400 hover:text-blue-900 transition-colors">+ Climalit</button>
+                                                <button onclick="addRowInvierno('Ventana Doble', 'transmision_ext', 4, 2.8, 19); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-blue-400 hover:text-blue-900 transition-colors">+ Doble</button>
+                                                <button onclick="addRowInvierno('Libre', 'transmision_ext', 1, 0, 0); saveStateToHistory();" class="text-[9px] bg-slate-300 dark:bg-slate-600 text-slate-800 dark:text-slate-200 px-2 py-1 rounded hover:bg-slate-400 transition-colors tracking-tighter">✎ Libre</button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tbody id="tbody-i-huecos" class="text-sm"></tbody>
+
+                            <!-- Grupo 3: Ventilación -->
+                            <tbody class="group-header">
+                                <tr class="bg-gray-100 dark:bg-slate-800/80 cursor-pointer group" onclick="toggleVisibility('tbody-i-vent', this)">
+                                    <td colspan="8" class="p-3 text-[10px] font-black uppercase text-blue-700 dark:text-blue-400 tracking-widest border-b border-gray-300 dark:border-slate-700">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                                <span>3. Ventilación e Infiltración <span class="text-[8px] text-emerald-600 dark:text-emerald-400/80 lowercase italic font-normal ml-2 tracking-normal">(RITE IDA)</span></span>
+                                            </div>
+                                            <div class="flex gap-1 no-print" onclick="event.stopPropagation()">
+                                                <button onclick="addRowInvierno('Ventilación Sensible', 'ventilacion', 90, 0.34, 19); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-blue-400 hover:text-blue-900 transition-colors">+ Sensible</button>
+                                                <button onclick="addRowInvierno('Infiltración', 'ventilacion', 30, 0.34, 19); saveStateToHistory();" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded hover:bg-blue-400 hover:text-blue-900 transition-colors">+ Infiltración</button>
+                                                <button onclick="addRowInvierno('Libre', 'ventilacion', 1, 0.34, 0); saveStateToHistory();" class="text-[9px] bg-slate-300 dark:bg-slate-600 text-slate-800 dark:text-slate-200 px-2 py-1 rounded hover:bg-slate-400 transition-colors tracking-tighter">✎ Libre</button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tbody id="tbody-i-vent" class="text-sm"></tbody>
+
+                            <tfoot class="bg-slate-900 text-white font-bold technical-font">
+                                <tr>
+                                    <td colspan="6" class="p-4 text-right uppercase tracking-widest text-slate-400">Total Invierno:</td>
+                                    <td id="tot-i-sens" class="p-4 text-right text-blue-400 text-lg">0 W</td>
+                                    <td class="no-print"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. RESUMEN EJECUTIVO DETALLADO -->
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Resumen Verano -->
+                <div class="glass-card p-6 border-l-4 border-l-orange-500 relative overflow-hidden print-avoid-break">
+                    <div class="absolute top-0 right-0 p-4 opacity-10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    </div>
+                    <h3 class="text-orange-500 font-black uppercase text-xs mb-4 tracking-tighter">Resultados Refrigeración (Verano)</h3>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4 relative z-10">
+                        <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded border border-slate-100 dark:border-slate-700">
+                            <p class="text-[10px] uppercase text-slate-500">Carga Sensible</p>
+                            <p class="font-bold text-orange-500" id="res-v-sens-w">0 W</p>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded border border-slate-100 dark:border-slate-700">
+                            <p class="text-[10px] uppercase text-slate-500">Carga Latente</p>
+                            <p class="font-bold text-teal-500" id="res-v-lat-w">0 W</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-end border-t border-slate-200 dark:border-slate-700 pt-4 relative z-10">
+                        <div>
+                            <p class="text-[10px] text-slate-500 uppercase mb-1">Carga Total de Refrigeración</p>
+                            <p class="text-4xl font-black technical-font" id="res-v-total-kw">0.00 <span class="text-sm font-normal text-slate-500">kW</span></p>
+                        </div>
+                        <div class="text-right space-y-1">
+                            <p class="text-lg font-bold text-slate-700 dark:text-slate-300" id="res-v-frig">0 fg/h</p>
+                            <p class="text-xs font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded" id="res-v-fcs">FCS: 0.00</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 relative z-10 h-48 w-full no-print">
+                        <canvas id="chart-verano"></canvas>
+                    </div>
+                </div>
+
+                <!-- Resumen Invierno -->
+                <div class="glass-card p-6 border-l-4 border-l-blue-500 relative overflow-hidden print-avoid-break">
+                    <div class="absolute top-0 right-0 p-4 opacity-10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707" /></svg>
+                    </div>
+                    <h3 class="text-blue-500 font-black uppercase text-xs mb-4 tracking-tighter">Resultados Calefacción (Invierno)</h3>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4 relative z-10">
+                        <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded border border-slate-100 dark:border-slate-700">
+                            <p class="text-[10px] uppercase text-slate-500">Pérdidas Transmisión</p>
+                            <p class="font-bold text-blue-500" id="res-i-trans-w">0 W</p>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded border border-slate-100 dark:border-slate-700">
+                            <p class="text-[10px] uppercase text-slate-500">Pérdidas Ventilación</p>
+                            <p class="font-bold text-sky-500" id="res-i-vent-w">0 W</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-end border-t border-slate-200 dark:border-slate-700 pt-4 relative z-10">
+                        <div>
+                            <p class="text-[10px] text-slate-500 uppercase mb-1">Carga Total de Calefacción</p>
+                            <p class="text-4xl font-black technical-font" id="res-i-total-kw">0.00 <span class="text-sm font-normal text-slate-500">kW</span></p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-bold text-slate-700 dark:text-slate-300" id="res-i-kcal">0 kcal/h</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 relative z-10 h-48 w-full no-print">
+                        <canvas id="chart-invierno"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dimensionado de Caudal -->
+            <div class="glass-card p-6 border border-blue-200 dark:border-blue-500/30 print-avoid-break">
+                <div class="flex justify-between items-center mb-4 cursor-pointer group" onclick="toggleVisibility('dim-caudal-content', this)">
+                    <h3 class="text-blue-700 dark:text-blue-400 font-bold text-sm uppercase tracking-widest flex items-center gap-2 group-hover:text-blue-500 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" /></svg>
+                        Dimensionado de Equipos: Caudal de Impulsión
+                    </h3>
+                    <button class="text-slate-400 hover:text-blue-500 transition-transform duration-200 transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </button>
+                </div>
+                <div id="dim-caudal-content" class="transition-all duration-300">
+                    <div class="mb-4 bg-slate-100 dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-2">
+                        <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Fórmula Aplicada:</span>
+                        <code class="text-sm font-mono text-blue-600 dark:text-blue-400 font-bold bg-white dark:bg-slate-900 px-3 py-1 rounded border border-blue-200 dark:border-blue-900 shadow-sm">V (m³/h) = Qs (W) / [0.34 · ΔT (K)]</code>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
+                        <div>
+                            <label class="block text-[10px] text-gray-500 dark:text-slate-400 uppercase font-bold mb-1">Temporada</label>
+                            <select id="dim-season" onchange="onSeasonChange()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:outline-none p-2.5 rounded text-gray-800 dark:text-slate-200 text-sm font-bold text-center h-[42px] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                <option value="verano">Verano (Refrigeración)</option>
+                                <option value="invierno">Invierno (Calefacción)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-gray-500 dark:text-slate-400 uppercase font-bold mb-1">Carga Sensible (Qs)</label>
+                            <div class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2.5 rounded text-amber-600 dark:text-amber-400 font-mono text-sm flex items-center justify-center h-[42px] font-bold" id="dim-qs">0 W</div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-gray-500 dark:text-slate-400 uppercase font-bold mb-1" title="RITE IT 1.1.4.1.2: Condiciones interiores recomendadas según el reglamento (Verano 23-25°C, Invierno 21-23°C)">T. Local (°C) <span class="text-[8px] font-normal normal-case text-slate-400 ml-1">(RITE IT 1.1)</span></label>
+                            <input type="number" id="dim-tloc" value="24" oninput="triggerCalculate();" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:outline-none p-2.5 rounded text-gray-800 dark:text-slate-200 text-sm font-mono text-center transition-colors h-[42px]">
+                            <div id="tloc-alert" class="text-[9px] text-emerald-600 dark:text-emerald-400 mt-1 h-3 transition-colors">✓ RITE IT 1.1 Cumplido</div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-gray-500 dark:text-slate-400 uppercase font-bold mb-1" title="Salto térmico recomendado (Impulsión-Local) ≤ 12°C por confort según bibliografía técnica.">T. Impulsión (°C) <span class="text-[8px] font-normal normal-case text-slate-400 ml-1">(Confort térmico)</span></label>
+                            <input type="number" id="dim-timp" value="12" oninput="triggerCalculate();" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:outline-none p-2.5 rounded text-gray-800 dark:text-slate-200 text-sm font-mono text-center transition-colors h-[42px]">
+                            <div id="timp-alert" class="text-[9px] text-emerald-600 dark:text-emerald-400 mt-1 h-3 transition-colors">✓ ΔT Adecuado</div>
+                        </div>
+                        <div class="bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-500/50 p-2.5 rounded-xl text-center shadow-inner relative overflow-hidden h-[60px] flex flex-col justify-center">
+                            <div class="absolute inset-0 bg-blue-500/5 dark:bg-blue-500/10 animate-pulse"></div>
+                            <label class="block text-[9px] text-blue-700 dark:text-blue-300 uppercase tracking-widest font-bold mb-0.5 relative z-10">Caudal Necesario</label>
+                            <div class="text-xl font-black text-blue-900 dark:text-white font-mono tracking-tighter relative z-10 leading-none" id="dim-caudal">0 <span class="text-xs font-normal text-blue-700 dark:text-blue-200">m³/h</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Módulo de Justificación de Energía Renovable -->
+            <div class="glass-card p-6 border border-emerald-200 dark:border-emerald-500/30 print-avoid-break">
+                <div class="flex justify-between items-center mb-4 cursor-pointer group" onclick="toggleVisibility('renovable-content', this)">
+                    <h3 class="text-emerald-700 dark:text-emerald-400 font-bold text-sm uppercase tracking-widest flex items-center gap-2 group-hover:text-emerald-500 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        Justificación Energía Renovable (Aerotermia - CTE DB-HE4)
+                    </h3>
+                    <button class="text-slate-400 hover:text-emerald-500 transition-transform duration-200 transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </button>
+                </div>
+                <div id="renovable-content" class="transition-all duration-300">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                        <div>
+                            <label class="block text-[10px] text-gray-500 dark:text-slate-400 uppercase font-bold mb-1" title="Demanda total de calefacción (Sensible)">Demanda Invierno (Q)</label>
+                            <div class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2.5 rounded text-gray-800 dark:text-white font-mono text-sm flex items-center justify-center font-bold h-[42px]" id="ren-demanda">0 W</div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-gray-500 dark:text-slate-400 uppercase font-bold mb-1" title="Seasonal Performance Factor (SCOP) de la Bomba de Calor en condiciones de diseño. Mínimo 2.5 normativo.">Rendto. (SPF) <span class="text-[8px] font-normal normal-case text-slate-400 ml-1">(Min 2.5 CTE HE4)</span></label>
+                            <input type="number" id="ren-spf" value="3.5" step="0.1" oninput="triggerCalculate();" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-emerald-500 p-2.5 rounded text-gray-800 dark:text-slate-200 text-sm font-mono text-center transition-colors h-[42px]">
+                            <div id="spf-alert" class="text-[9px] text-emerald-600 dark:text-emerald-400 mt-1 h-3 transition-colors">✓ Válido Renovable CTE DB-HE4</div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-gray-500 dark:text-slate-400 uppercase font-bold mb-1" title="Porcentaje de la demanda que se considera energía renovable aportada por el equipo">Cuota Renovable (%)</label>
+                            <div class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-2.5 rounded text-emerald-600 dark:text-emerald-400 font-mono text-sm flex items-center justify-center font-bold h-[42px]" id="ren-pct">0.0 %</div>
+                        </div>
+                        <div class="bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-300 dark:border-emerald-500/50 p-2.5 rounded-xl text-center shadow-inner relative overflow-hidden h-[60px] flex flex-col justify-center">
+                            <div class="absolute inset-0 bg-emerald-500/5 dark:bg-emerald-500/10 animate-pulse"></div>
+                            <label class="block text-[9px] text-emerald-800 dark:text-emerald-300 uppercase tracking-widest font-bold mb-0.5 relative z-10">Energía Aportada (E_res)</label>
+                            <div class="text-xl font-black text-emerald-900 dark:text-white font-mono tracking-tighter relative z-10 leading-none" id="ren-w">0 <span class="text-xs font-normal text-emerald-700 dark:text-emerald-200">W</span></div>
+                        </div>
+                    </div>
+                    <p class="text-[9px] text-gray-500 dark:text-slate-500 mt-4 font-mono italic">* Ecuación Directiva Europea (Decisión 2013/114/UE) / CTE DB-HE4: E_res = Q_usable · (1 - 1/SPF). Solo se considera energía renovable (Aerotermia) si SPF > 2.5</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Calculadora U -->
+    <div id="modal-u-calc" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[200] hidden flex items-center justify-center transition-opacity duration-300">
+        <div class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-6 rounded-2xl shadow-2xl max-w-lg w-full m-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                    Calculadora de Transmitancia (U)
+                </h3>
+                <button onclick="closeUCalc()" class="text-gray-400 hover:text-red-500 transition-colors text-xl font-bold">✕</button>
+            </div>
+            <p class="text-xs text-slate-500 mb-4">Añade las capas del cerramiento constructivo y selecciona la posición para aplicar las resistencias superficiales normativas (CTE DB-HE DA).</p>
+            <div class="mb-3">
+                <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1">Posición del Cerramiento</label>
+                <select id="u-calc-type" onchange="calculateUModal()" class="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-700 text-xs p-2 rounded outline-none text-slate-800 dark:text-slate-200 mb-2">
+                    <option value="0.17">Fachada / Muro (Rse+Rsi = 0.17)</option>
+                    <option value="0.14">Cubierta / Flujo ascendente (Rse+Rsi = 0.14)</option>
+                    <option value="0.21">Suelo / Flujo descendente (Rse+Rsi = 0.21)</option>
+                    <option value="0.26">Partición Interior (Rsi+Rsi = 0.26)</option>
+                </select>
+            </div>
+            
+            <!-- Encabezados de Tabla Añadidos -->
+            <div class="hidden md:flex gap-2 items-center px-1 mb-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+                <div class="flex-grow text-[10px] font-bold text-slate-500 uppercase tracking-widest">Capa Constructiva / Material</div>
+                <div class="w-20 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center" title="Espesor de la capa en metros">Espesor (m)</div>
+                <div class="w-20 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center" title="Conductividad Térmica (Lambda)">λ (W/mK)</div>
+                <div class="w-8"></div>
+            </div>
+
+            <div class="space-y-3 mb-4 max-h-[40vh] overflow-y-auto pr-2" id="u-calc-layers">
+                <!-- Layers go here -->
+            </div>
+            <button onclick="addULayer()" class="w-full py-2 border border-dashed border-gray-300 dark:border-slate-600 rounded-lg text-xs font-bold text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors mb-4">+ Añadir Capa de Material</button>
+            
+            <div class="flex justify-between items-center bg-gray-50 dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 mb-4">
+                <div>
+                    <span class="block text-[10px] uppercase font-bold text-slate-500">Resistencia Térmica (R)</span>
+                    <span class="font-mono text-sm dark:text-slate-300" id="u-calc-r">0.170 m²K/W</span>
+                </div>
+                <div class="text-right">
+                    <span class="block text-[10px] uppercase font-bold text-amber-500">Valor U Resultante</span>
+                    <span class="font-mono text-2xl font-black text-gray-800 dark:text-white" id="u-calc-res">5.882</span>
+                    <span class="text-[10px] text-slate-500">W/m²K</span>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeUCalc()" class="px-4 py-2 rounded-lg text-sm font-bold border border-slate-300 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800">Cancelar</button>
+                <button onclick="applyUCalc()" class="px-4 py-2 rounded-lg text-sm font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20">Aplicar Valor U</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Didáctico Fijo -->
+    <footer class="fixed bottom-0 w-full bg-slate-900 border-t border-slate-800 p-2 no-print z-50">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-center items-center gap-2 md:gap-6 text-center">
+            <code class="text-[9px] text-slate-400">Verano: Q_s = U·A·CLTD(o ΔT) | Q_rad = A·Irr·FS | Q_vent_s = V·0.34·ΔT | Q_vent_l = V·0.84·Δw</code>
+            <code class="text-[9px] text-slate-400">Invierno: Q = U·A·ΔT | Q_vent = V·0.34·ΔT</code>
+        </div>
+    </footer>
+
+    <div id="word-formatter" style="position:fixed; top:-9999px; left:-9999px; width:950px; font-family:'Segoe UI', Arial, sans-serif;"></div>
+
+    <script>
+        // LÓGICA VISOR DE PLANOS
+        let planoScale = 1;
+        let planoPanning = false;
+        let planoPointX = 0;
+        let planoPointY = 0;
+        let planoStartX = 0;
+        let planoStartY = 0;
+        let imgContainer, imgElement;
+
+        function initPlanoViewer() {
+            imgContainer = document.getElementById('image-container');
+            imgElement = document.getElementById('plano-img');
+            const dropZone = document.getElementById('drop-zone');
+
+            // Drag and drop events en el contenedor
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('bg-slate-100', 'dark:bg-slate-700');
+            });
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('bg-slate-100', 'dark:bg-slate-700');
+            });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('bg-slate-100', 'dark:bg-slate-700');
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    processImageFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            // Eventos de Paneo y Zoom
+            imgContainer.onmousedown = function (e) {
+                e.preventDefault();
+                planoStartX = e.clientX - planoPointX;
+                planoStartY = e.clientY - planoPointY;
+                planoPanning = true;
+                imgContainer.classList.replace('cursor-grab', 'cursor-grabbing');
+            }
+            imgContainer.onmouseup = function (e) {
+                planoPanning = false;
+                imgContainer.classList.replace('cursor-grabbing', 'cursor-grab');
+            }
+            imgContainer.onmouseleave = function (e) {
+                planoPanning = false;
+                imgContainer.classList.replace('cursor-grabbing', 'cursor-grab');
+            }
+            imgContainer.onmousemove = function (e) {
+                if (!planoPanning) return;
+                e.preventDefault();
+                planoPointX = e.clientX - planoStartX;
+                planoPointY = e.clientY - planoStartY;
+                applyPlanoTransform();
+            }
+            imgContainer.onwheel = function (e) {
+                e.preventDefault();
+                const xs = (e.clientX - imgContainer.getBoundingClientRect().left - planoPointX) / planoScale;
+                const ys = (e.clientY - imgContainer.getBoundingClientRect().top - planoPointY) / planoScale;
+                const delta = (e.wheelDelta ? e.wheelDelta > 0 : e.deltaY < 0) ? 0.1 : -0.1;
+                planoScale += delta;
+                if (planoScale < 0.1) planoScale = 0.1;
+                if (planoScale > 10) planoScale = 10;
+                planoPointX = (e.clientX - imgContainer.getBoundingClientRect().left) - xs * planoScale;
+                planoPointY = (e.clientY - imgContainer.getBoundingClientRect().top) - ys * planoScale;
+                applyPlanoTransform();
+            }
+        }
+
+        function handleImageUpload(event) {
+            if (event.target.files && event.target.files.length > 0) {
+                processImageFile(event.target.files[0]);
+            }
+        }
+
+        function processImageFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Por favor, selecciona un archivo de imagen válido (JPG, PNG).');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imgElement.src = e.target.result;
+                document.getElementById('drop-msg').classList.add('hidden');
+                document.getElementById('plano-upload').classList.add('hidden');
+                imgContainer.classList.remove('hidden');
+                document.getElementById('plano-toolbar').classList.remove('hidden');
+                resetPlano();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function zoomPlano(step) {
+            planoScale += step;
+            if(planoScale < 0.1) planoScale = 0.1;
+            if(planoScale > 10) planoScale = 10;
+            applyPlanoTransform();
+        }
+
+        function resetPlano() {
+            planoScale = 1;
+            planoPointX = 0;
+            planoPointY = 0;
+            applyPlanoTransform();
+        }
+
+        function removePlano() {
+            imgElement.src = '';
+            document.getElementById('drop-msg').classList.remove('hidden');
+            document.getElementById('plano-upload').classList.remove('hidden');
+            document.getElementById('plano-upload').value = '';
+            imgContainer.classList.add('hidden');
+            document.getElementById('plano-toolbar').classList.add('hidden');
+        }
+
+        function applyPlanoTransform() {
+            imgElement.style.transform = `translate(${planoPointX}px, ${planoPointY}px) scale(${planoScale})`;
+        }
+
+
+        // DATOS DE RADIACIÓN Y CLTD POR ORIENTACIÓN (Valores Medios Verano)
+        const ORIENTATION_DATA = {
+            'N':  { irr: 120, cltd: 8 },
+            'S':  { irr: 450, cltd: 15 },
+            'E':  { irr: 550, cltd: 16 },
+            'O':  { irr: 650, cltd: 21 },
+            'NE': { irr: 200, cltd: 10 },
+            'NO': { irr: 250, cltd: 14 },
+            'SE': { irr: 400, cltd: 14 },
+            'SO': { irr: 550, cltd: 18 },
+            'H':  { irr: 850, cltd: 24 },
+            '-':  { irr: 0, cltd: 10 }
+        };
+
+        function updateOrientationV(select, recalc = true) {
+            const tr = select.closest('tr');
+            if(!tr) return;
+            const typeSelect = tr.querySelector('.row-type-v');
+            if(!typeSelect) return;
+            const type = typeSelect.value;
+            const orient = select.value;
+            const data = ORIENTATION_DATA[orient];
+            
+            if (data) {
+                if (type === 'vidrio_rad') {
+                    tr.querySelector('.row-val1').value = data.irr;
+                } else if (type === 'opaco') {
+                    tr.querySelector('.row-val2').value = data.cltd;
+                }
+            }
+            if(recalc) triggerCalculate();
+        }
+
+        // DATOS CLIMATICOS POR PROVINCIA (UNE / CTE)
+        const PROVINCIAS_DATA = {
+            // Andalucía
+            'malaga': { vExt: 34, vDw: 5.5, iExt: 2, alt: 10 },
+            'almeria': { vExt: 33, vDw: 5.5, iExt: 5, alt: 20 },
+            'cadiz': { vExt: 33, vDw: 6.0, iExt: 5, alt: 10 },
+            'cordoba': { vExt: 40, vDw: 4.0, iExt: -1, alt: 120 },
+            'granada': { vExt: 36, vDw: 4.5, iExt: -3, alt: 680 },
+            'huelva': { vExt: 35, vDw: 5.5, iExt: 3, alt: 20 },
+            'jaen': { vExt: 38, vDw: 4.5, iExt: -1, alt: 570 },
+            'sevilla': { vExt: 38, vDw: 5.0, iExt: 1, alt: 10 },
+            // Resto
+            'albacete': { vExt: 35, vDw: 4.0, iExt: -4, alt: 680 },
+            'alicante': { vExt: 32, vDw: 6.0, iExt: 3, alt: 10 },
+            'badajoz': { vExt: 36, vDw: 4.0, iExt: -3, alt: 680 },
+            'barcelona': { vExt: 31, vDw: 5.5, iExt: 1, alt: 15 },
+            'bilbao': { vExt: 30, vDw: 5.5, iExt: 2, alt: 20 },
+            'burgos': { vExt: 34, vDw: 4.0, iExt: -5, alt: 860 },
+            'caceres': { vExt: 38, vDw: 4.0, iExt: -1, alt: 400 },
+            'castellon': { vExt: 33, vDw: 6.0, iExt: 3, alt: 30 },
+            'ciudadreal': { vExt: 37, vDw: 4.0, iExt: -3, alt: 620 },
+            'coruna': { vExt: 26, vDw: 5.0, iExt: 2, alt: 20 },
+            'cuenca': { vExt: 37, vDw: 4.0, iExt: -1, alt: 450 },
+            'girona': { vExt: 32, vDw: 5.0, iExt: -2, alt: 70 },
+            'guadalajara': { vExt: 35, vDw: 4.0, iExt: -4, alt: 700 },
+            'huesca': { vExt: 36, vDw: 4.5, iExt: -3, alt: 480 },
+            'leon': { vExt: 32, vDw: 4.0, iExt: -6, alt: 830 },
+            'lleida': { vExt: 33, vDw: 5.0, iExt: -2, alt: 150 },
+            'logrono': { vExt: 34, vDw: 4.5, iExt: -3, alt: 380 },
+            'lugo': { vExt: 27, vDw: 5.0, iExt: 1, alt: 450 },
+            'madrid': { vExt: 36, vDw: 4.0, iExt: -3, alt: 650 },
+            'murcia': { vExt: 35, vDw: 5.5, iExt: 2, alt: 40 },
+            'ourense': { vExt: 30, vDw: 4.5, iExt: -2, alt: 350 },
+            'oviedo': { vExt: 32, vDw: 4.5, iExt: -2, alt: 230 },
+            'palencia': { vExt: 34, vDw: 4.0, iExt: -5, alt: 740 },
+            'palma': { vExt: 32, vDw: 6.0, iExt: 4, alt: 10 },
+            'pamplona': { vExt: 35, vDw: 4.5, iExt: -3, alt: 450 },
+            'pontevedra': { vExt: 31, vDw: 5.0, iExt: 0, alt: 20 },
+            'salamanca': { vExt: 34, vDw: 4.0, iExt: -5, alt: 800 },
+            'sansebastian': { vExt: 32, vDw: 5.0, iExt: -2, alt: 450 },
+            'santander': { vExt: 28, vDw: 5.0, iExt: 2, alt: 15 },
+            'segovia': { vExt: 33, vDw: 4.0, iExt: -5, alt: 1000 },
+            'soria': { vExt: 32, vDw: 4.0, iExt: -6, alt: 1060 },
+            'tarragona': { vExt: 31, vDw: 6.0, iExt: 2, alt: 30 },
+            'teruel': { vExt: 32, vDw: 4.0, iExt: -7, alt: 1060 },
+            'toledo': { vExt: 36, vDw: 4.0, iExt: -3, alt: 530 },
+            'valencia': { vExt: 31, vDw: 6.0, iExt: 2, alt: 15 },
+            'valladolid': { vExt: 35, vDw: 4.5, iExt: -4, alt: 690 },
+            'vitoria': { vExt: 30, vDw: 5.0, iExt: 0, alt: 10 },
+            'zamora': { vExt: 34, vDw: 4.0, iExt: -4, alt: 650 },
+            'zaragoza': { vExt: 36, vDw: 4.5, iExt: -3, alt: 240 }
+        };
+
+        function loadProvinciaData() {
+            const prov = document.getElementById('proj-provincia').value;
+            if(prov && PROVINCIAS_DATA[prov]) {
+                const data = PROVINCIAS_DATA[prov];
+                document.getElementById('v-ext-t').value = data.vExt;
+                document.getElementById('v-dw').value = data.vDw;
+                document.getElementById('i-ext-t').value = data.iExt;
+                const altInput = document.getElementById('proj-alt');
+                if(altInput) altInput.value = data.alt;
+                
+                triggerCalculate();
+                
+                const t = document.getElementById('toast');
+                if(t) {
+                    t.innerText = '✓ Datos de ' + document.querySelector('#proj-provincia option:checked').text + ' cargados';
+                    t.classList.remove('hidden'); 
+                    setTimeout(() => { t.classList.add('hidden'); }, 3000);
+                }
+            }
+        }
+
+        // LÓGICA DE TEMAS
+        function initTheme() {
+            if (localStorage.getItem('hds_theme') === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark'); // Default dark
+            }
+        }
+
+        function toggleTheme() { 
+            document.documentElement.classList.toggle('dark'); 
+            localStorage.setItem('hds_theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        }
+
+        // LÓGICA DE PESTAÑAS (TABS INTERNAS TÉRMICO)
+        function switchTab(tab) {
+            document.getElementById('tab-verano').classList.add('hidden');
+            document.getElementById('tab-invierno').classList.add('hidden');
+            document.getElementById('btn-verano').classList.remove('active-verano');
+            document.getElementById('btn-invierno').classList.remove('active-invierno');
+            
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.getElementById(`btn-${tab}`).classList.add(`active-${tab}`);
+        }
+
+        // LÓGICA DE VISTAS (DETALLADO VS SIMPLIFICADO)
+        function switchThermalMethod(method) {
+            document.getElementById('thermal-detailed-section').classList.add('hidden');
+            document.getElementById('thermal-simplified-section').classList.add('hidden');
+            document.getElementById('btn-method-detailed').classList.remove('active');
+            document.getElementById('btn-method-simplified').classList.remove('active');
+            
+            document.getElementById(`thermal-${method}-section`).classList.remove('hidden');
+            document.getElementById(`btn-method-${method}`).classList.add('active');
+
+            if(method === 'simplified') calculateSimplifiedMethod();
+        }
+
+        // Anti-XSS (Escapar texto inyectado en innerHTML)
+        function escapeHTML(str) {
+            return String(str).replace(/[&<>'"]/g, function(tag) {
+                const charsToReplace = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' };
+                return charsToReplace[tag] || tag;
+            });
+        }
+
+        // --- DEFINICIÓN DE TIPOS (DETALLADO) ---
+        const tiposVerano = `
+            <option value="opaco">Muro/Cub. Ext (Sensible)</option>
+            <option value="particion_int">Partición Int. (Sensible)</option>
+            <option value="vidrio_rad">Vidrio Solar (Sensible)</option>
+            <option value="vidrio_trans">Vidrio Trans. (Sensible)</option>
+            <option value="ventilacion">Ventilación (Sens + Lat)</option>
+            <option value="personas">Ocupantes (Sens + Lat)</option>
+            <option value="equipos">Iluminación / Eq. (Sens)</option>
+        `;
+
+        const tiposInvierno = `
+            <option value="transmision_ext">Transmisión Exterior (ΔT Auto)</option>
+            <option value="transmision_int">Partición Interior (ΔT Manual)</option>
+            <option value="ventilacion">Infiltración / Ventilación</option>
+        `;
+
+        // Base de Datos Normativa CTE / RITE
+        const CTE_RITE_PRESETS = {
+            verano: {
+                muro_ext: { desc: 'Muro Exterior (U máx CTE DB-HE1)', tipo: 'opaco', cant: 15, val1: 0.41, val2: 15 },
+                cubierta: { desc: 'Cubierta Plana (U máx CTE DB-HE1)', tipo: 'opaco', cant: 20, val1: 0.35, val2: 24 },
+                vidrio_rad: { desc: 'Rad. Vidrio Sur (FS máx CTE 0.45)', tipo: 'vidrio_rad', cant: 4, val1: 350, val2: 0.45 },
+                vidrio_trans: { desc: 'Transmisión Vidrio (U máx CTE DB-HE1)', tipo: 'vidrio_trans', cant: 4, val1: 2.7, val2: 0 },
+                ocupacion: { desc: 'Ocupantes RITE (Oficina)', tipo: 'personas', cant: 2, val1: 75, val2: 55 },
+                ventilacion: { desc: 'Ventilación IDA 2 (RITE)', tipo: 'ventilacion', cant: 90 /* 45 m3/h x 2 pers */, val1: 0.34, val2: 0.84 },
+                equipos: { desc: 'Iluminación LED / PC', tipo: 'equipos', cant: 15, val1: 15, val2: 0 },
+                libre: { desc: 'Nuevo Elemento Libre', tipo: 'opaco', cant: 1, val1: 0, val2: 0 }
+            },
+            invierno: {
+                muro_ext: { desc: 'Muro Exterior (U máx CTE DB-HE1)', tipo: 'transmision_ext', cant: 15, u: 0.41, dt: 19 },
+                cubierta: { desc: 'Cubierta Plana (U máx CTE DB-HE1)', tipo: 'transmision_ext', cant: 20, u: 0.35, dt: 19 },
+                suelo: { desc: 'Suelo s/ Terreno (U máx CTE DB-HE1)', tipo: 'transmision_ext', cant: 20, u: 0.45, dt: 19 },
+                vidrio: { desc: 'Vidrio y Carpintería (U máx CTE DB-HE1)', tipo: 'transmision_ext', cant: 4, u: 2.7, dt: 19 },
+                ventilacion: { desc: 'Ventilación IDA 2 (RITE)', tipo: 'ventilacion', cant: 90, u: 0.34, dt: 19 },
+                infiltracion: { desc: 'Infiltración Rendijas (CTE/RITE)', tipo: 'ventilacion', cant: 30, u: 0.34, dt: 19 },
+                libre: { desc: 'Nuevo Elemento Libre', tipo: 'transmision_ext', cant: 1, u: 0, dt: 0 }
+            }
+        };
+
+        function addPresetRow(season, presetKey) {
+            const data = CTE_RITE_PRESETS[season][presetKey];
+            if(!data) return;
+
+            if(season === 'verano') {
+                addRowVerano(data.desc, data.tipo, data.cant, data.val1, data.val2);
+            } else {
+                addRowInvierno(data.desc, data.tipo, data.cant, data.u, data.dt);
+            }
+        }
+
+        // --- GESTIÓN TABLAS DIVIDIDAS (VERANO) ---
+        function getTbodyForVerano(tipo) {
+            if(['opaco', 'particion_int'].includes(tipo)) return 'tbody-v-opacos';
+            if(['vidrio_rad', 'vidrio_trans'].includes(tipo)) return 'tbody-v-huecos';
+            if(['ventilacion'].includes(tipo)) return 'tbody-v-vent';
+            if(['personas', 'equipos'].includes(tipo)) return 'tbody-v-int';
+            return 'tbody-v-opacos';
+        }
+
+        function addRowVerano(desc = 'Nuevo Elemento', tipo = 'opaco', cant = 10, val1 = 0.5, val2 = 10, orient = '-') {
+            const tr = document.createElement('tr');
+            tr.className = "verano-data-row border-b border-slate-200 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors";
+            tr.innerHTML = `
+                <td class="p-2 flex items-center gap-2">
+                    <span class="drag-handle text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 no-print" title="Arrastrar para reordenar">☰</span>
+                    <input type="text" value="${escapeHTML(desc)}" class="row-desc w-full bg-transparent focus:outline-none p-1 text-xs text-gray-800 dark:text-slate-200" oninput="triggerCalculate()">
+                </td>
+                <td class="p-2 text-center relative">
+                    <select class="w-full bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded p-1 text-[11px] font-bold text-gray-800 dark:text-slate-300 row-type-v outline-none focus:border-orange-500 transition-colors" onchange="updateRowHintsV(this)">${tiposVerano}</select>
+                    <div class="load-type-badges mt-1 flex justify-center gap-1"></div>
+                </td>
+                <td class="p-2 text-center">
+                    <select class="row-orient w-full bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded p-1 text-[11px] font-bold text-gray-800 dark:text-slate-300 outline-none focus:border-orange-500 transition-colors" onchange="updateOrientationV(this)">
+                        <option value="-" ${orient==='-'?'selected':''}>-</option>
+                        <option value="N" ${orient==='N'?'selected':''}>N</option>
+                        <option value="S" ${orient==='S'?'selected':''}>S</option>
+                        <option value="E" ${orient==='E'?'selected':''}>E</option>
+                        <option value="O" ${orient==='O'?'selected':''}>O</option>
+                        <option value="NE" ${orient==='NE'?'selected':''}>NE</option>
+                        <option value="NO" ${orient==='NO'?'selected':''}>NO</option>
+                        <option value="SE" ${orient==='SE'?'selected':''}>SE</option>
+                        <option value="SO" ${orient==='SO'?'selected':''}>SO</option>
+                        <option value="H" ${orient==='H'?'selected':''}>Horiz.</option>
+                    </select>
+                </td>
+                <td class="p-2"><input type="number" step="any" value="${cant}" class="row-cant text-center font-mono w-full bg-transparent focus:outline-none text-xs" oninput="triggerCalculate()"></td>
+                <td class="p-2 relative">
+                    <div class="flex items-center">
+                        <input type="number" step="any" value="${val1}" class="row-val1 text-center font-mono w-full bg-transparent focus:outline-none text-xs" oninput="triggerCalculate()">
+                        <button onclick="openUCalc(this)" class="btn-u-calc text-xs ml-1 bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-600 rounded p-1 shadow-sm opacity-90 hover:opacity-100 hover:bg-amber-200 dark:hover:bg-amber-800 transition-all no-print" title="Calculadora de Transmitancia U">🧮</button>
+                    </div>
+                </td>
+                <td class="p-2"><input type="number" step="any" value="${val2}" class="row-val2 text-center font-mono w-full bg-transparent focus:outline-none text-xs" oninput="triggerCalculate()"></td>
+                <td class="p-2 text-right font-mono font-bold text-orange-600 dark:text-orange-400 row-res-s text-base">0</td>
+                <td class="p-2 text-right font-mono font-bold text-teal-600 dark:text-teal-400 row-res-l text-base transition-opacity duration-300">0</td>
+                <td class="p-2 text-center no-print"><button onclick="this.closest('tr').remove(); triggerCalculate()" class="text-slate-400 hover:text-red-500 font-bold p-1">✕</button></td>
+            `;
+            tr.querySelector('.row-type-v').value = tipo;
+            const targetTbodyId = getTbodyForVerano(tipo);
+            const targetTbody = document.getElementById(targetTbodyId);
+            if (targetTbody) targetTbody.appendChild(tr);
+            updateRowHintsV(tr.querySelector('.row-type-v'), false);
+        }
+
+        function updateRowHintsV(select, recalc = true) {
+            const tr = select.closest('tr');
+            const type = select.value;
+            const i1 = tr.querySelector('.row-val1');
+            const i2 = tr.querySelector('.row-val2');
+            const latCell = tr.querySelector('.row-res-l');
+            const badgeContainer = tr.querySelector('.load-type-badges');
+            const uBtn = tr.querySelector('.btn-u-calc');
+            
+            i1.disabled = false; i2.disabled = false;
+            i1.removeAttribute('readonly'); i2.removeAttribute('readonly');
+
+            if(type === 'opaco' || type === 'particion_int') { 
+                i1.title = "Valor U (W/m²K)"; i2.title = type === 'opaco' ? "CLTD (°C)" : "ΔT Manual (°C)"; 
+                if(uBtn) uBtn.style.display = 'block';
+            }
+            else if(type === 'vidrio_trans') { 
+                i1.title = "Valor U (W/m²K)"; i2.title = "ΔT Auto-calculado"; 
+                i2.setAttribute('readonly', true);
+                if(uBtn) uBtn.style.display = 'block';
+            }
+            else if(type === 'vidrio_rad') { 
+                i1.title = "Irradiación (W/m²)"; i2.title = "Factor Solar (SC)"; 
+                if(uBtn) uBtn.style.display = 'none';
+            }
+            else if(type === 'ventilacion') { 
+                i1.value = 0.34; i2.value = 0.84; 
+                i1.title = "Coef. Sensible (0.34)"; i2.title = "Coef. Latente (0.84)"; 
+                i1.disabled=true; i2.disabled=true;
+                if(uBtn) uBtn.style.display = 'none';
+            }
+            else if(type === 'personas') { 
+                i1.title = "W Sensible/pers"; i2.title = "W Latente/pers"; 
+                if(uBtn) uBtn.style.display = 'none';
+            }
+            else if(type === 'equipos') { 
+                i1.title = "W/m² o W total"; i2.value = 0; i2.disabled = true; 
+                if(uBtn) uBtn.style.display = 'none';
+            }
+
+            if(type === 'ventilacion' || type === 'personas') {
+                badgeContainer.innerHTML = '<span class="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 rounded text-[8px] font-bold tracking-widest border border-orange-200 dark:border-orange-800 shadow-sm">SENS</span><span class="px-1.5 py-0.5 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded text-[8px] font-bold tracking-widest border border-teal-200 dark:border-teal-800 shadow-sm">LAT</span>';
+                latCell.style.opacity = '1';
+            } else {
+                badgeContainer.innerHTML = '<span class="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 rounded text-[8px] font-bold tracking-widest border border-orange-200 dark:border-orange-800 shadow-sm">SOLO SENSIBLE</span>';
+                latCell.style.opacity = '0.2'; 
+                latCell.innerText = '-';
+            }
+            
+            const orientSelect = tr.querySelector('.row-orient');
+            if (orientSelect) updateOrientationV(orientSelect, false);
+            
+            if(recalc) {
+                triggerCalculate();
+            }
+        }
+
+        // --- GESTIÓN TABLAS DIVIDIDAS (INVIERNO) ---
+        function getTbodyForInvierno(tipo, desc) {
+            if(tipo === 'ventilacion') return 'tbody-i-vent';
+            const d = desc.toLowerCase();
+            if(d.includes('vidrio') || d.includes('ventan') || d.includes('climalit') || d.includes('transparente')) return 'tbody-i-huecos';
+            return 'tbody-i-opacos';
+        }
+
+        function addRowInvierno(desc = 'Muro Fachada', tipo = 'transmision_ext', cant = 30, u = 0.35, dt = 19, orient = '-') {
+            const tr = document.createElement('tr');
+            tr.className = "invierno-data-row border-b border-slate-200 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors";
+            tr.innerHTML = `
+                <td class="p-2 flex items-center gap-2">
+                    <span class="drag-handle text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 no-print" title="Arrastrar para reordenar">☰</span>
+                    <input type="text" value="${escapeHTML(desc)}" class="row-desc w-full bg-transparent focus:outline-none p-1 text-xs text-gray-800 dark:text-slate-200" oninput="triggerCalculate()">
+                </td>
+                <td class="p-2 text-center relative">
+                    <select class="w-full bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded p-1 text-[11px] font-bold text-gray-800 dark:text-slate-300 row-type-i outline-none focus:border-blue-500 transition-colors" onchange="updateRowHintsI(this)">${tiposInvierno}</select>
+                    <div class="mt-1 flex justify-center"><span class="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded text-[8px] font-bold tracking-widest border border-blue-200 dark:border-blue-800 shadow-sm">PÉRDIDA SENS.</span></div>
+                </td>
+                <td class="p-2 text-center">
+                    <select class="row-orient w-full bg-gray-50 dark:bg-slate-900 border border-gray-300 dark:border-slate-600 rounded p-1 text-[11px] font-bold text-gray-800 dark:text-slate-300 outline-none focus:border-blue-500 transition-colors" onchange="triggerCalculate()">
+                        <option value="-" ${orient==='-'?'selected':''}>-</option>
+                        <option value="N" ${orient==='N'?'selected':''}>N</option>
+                        <option value="S" ${orient==='S'?'selected':''}>S</option>
+                        <option value="E" ${orient==='E'?'selected':''}>E</option>
+                        <option value="O" ${orient==='O'?'selected':''}>O</option>
+                        <option value="NE" ${orient==='NE'?'selected':''}>NE</option>
+                        <option value="NO" ${orient==='NO'?'selected':''}>NO</option>
+                        <option value="SE" ${orient==='SE'?'selected':''}>SE</option>
+                        <option value="SO" ${orient==='SO'?'selected':''}>SO</option>
+                        <option value="H" ${orient==='H'?'selected':''}>Horiz.</option>
+                    </select>
+                </td>
+                <td class="p-2"><input type="number" step="any" value="${cant}" class="row-cant text-center font-mono w-full bg-transparent focus:outline-none text-xs" oninput="triggerCalculate()"></td>
+                <td class="p-2 relative">
+                    <div class="flex items-center">
+                        <input type="number" step="any" value="${u}" class="row-u text-center font-mono w-full bg-transparent focus:outline-none text-xs" oninput="triggerCalculate()">
+                        <button onclick="openUCalc(this)" class="btn-u-calc text-xs ml-1 bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-600 rounded p-1 shadow-sm opacity-90 hover:opacity-100 hover:bg-amber-200 dark:hover:bg-amber-800 transition-all no-print" title="Calculadora de Transmitancia U">🧮</button>
+                    </div>
+                </td>
+                <td class="p-2"><input type="number" step="any" value="${dt}" class="row-dt text-center font-mono w-full bg-gray-100 dark:bg-slate-800/50 border border-transparent rounded focus:outline-none text-xs" oninput="triggerCalculate()"></td>
+                <td class="p-2 text-right font-mono font-bold text-blue-600 dark:text-blue-400 row-res-s text-base">0</td>
+                <td class="p-2 text-center no-print"><button onclick="this.closest('tr').remove(); triggerCalculate()" class="text-slate-400 hover:text-red-500 font-bold p-1">✕</button></td>
+            `;
+            tr.querySelector('.row-type-i').value = tipo;
+            const targetTbodyId = getTbodyForInvierno(tipo, desc);
+            const targetTbody = document.getElementById(targetTbodyId);
+            if (targetTbody) targetTbody.appendChild(tr);
+            updateRowHintsI(tr.querySelector('.row-type-i'), false);
+        }
+
+        function updateRowHintsI(select, recalc = true) {
+            const tr = select.closest('tr');
+            const type = select.value;
+            const uInput = tr.querySelector('.row-u');
+            const dtInput = tr.querySelector('.row-dt');
+            const uBtn = tr.querySelector('.btn-u-calc');
+            
+            uInput.disabled = false;
+            dtInput.removeAttribute('readonly');
+            dtInput.title = "ΔT Manual (K)";
+
+            if(type === 'ventilacion') { 
+                uInput.value = 0.34; 
+                uInput.disabled = true; 
+                dtInput.setAttribute('readonly', true);
+                dtInput.title = "ΔT Auto-calculado";
+                if(uBtn) uBtn.style.display = 'none';
+            } else if (type === 'transmision_ext') {
+                dtInput.setAttribute('readonly', true);
+                dtInput.title = "ΔT Auto-calculado";
+                if(uBtn) uBtn.style.display = 'block';
+            } else {
+                if(uBtn) uBtn.style.display = 'block';
+            }
+
+            if(recalc) triggerCalculate();
+        }
+
+        // --- SISTEMA DE ESTADO Y AUTO-GUARDADO ---
+        let isRestoring = false;
+
+        // --- DESHACER / REHACER ---
+        let historyStack = [];
+        let historyIndex = -1;
+        let historyTimeout = null;
+
+        function saveStateToHistory(isDebounced = false) {
+            if (isRestoring) return;
+            const state = JSON.stringify(getProjectData());
+            
+            // No duplicar si el estado no ha cambiado
+            if (historyIndex >= 0 && historyStack[historyIndex] === state) return;
+
+            const save = () => {
+                // Si deshicimos y luego cambiamos algo, reescribir el futuro
+                if (historyIndex < historyStack.length - 1) {
+                    historyStack = historyStack.slice(0, historyIndex + 1);
+                }
+                historyStack.push(state);
+                if (historyStack.length > 50) historyStack.shift(); // Limitar a 50 pasos
+                historyIndex = historyStack.length - 1;
+            };
+
+            // Anti-rebote para escritura en inputs (guarda tras 800ms de inactividad)
+            if (isDebounced) {
+                clearTimeout(historyTimeout);
+                historyTimeout = setTimeout(save, 800);
+            } else {
+                save();
+            }
+        }
+
+        function undoAction() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                loadProjectData(JSON.parse(historyStack[historyIndex]));
+                const t = document.getElementById('toast');
+                if(t) { t.innerText = '↩️ Deshacer'; t.classList.remove('hidden'); setTimeout(() => t.classList.add('hidden'), 1500); }
+            }
+        }
+
+        function redoAction() {
+            if (historyIndex < historyStack.length - 1) {
+                historyIndex++;
+                loadProjectData(JSON.parse(historyStack[historyIndex]));
+                const t = document.getElementById('toast');
+                if(t) { t.innerText = '↪️ Rehacer'; t.classList.remove('hidden'); setTimeout(() => t.classList.add('hidden'), 1500); }
+            }
+        }
+
+        function triggerCalculate() {
+            if(!isRestoring) {
+                calculateAll();
+                saveProjectToStorage();
+                saveStateToHistory(true); // Guardar estado de forma optimizada
+            }
+        }
+
+        // LÓGICA CÁLCULO SIMPLIFICADO (MÉTODO ALPINO)
+        function triggerSimplifiedCalculate() {
+            calculateSimplifiedMethod();
+            if(!isRestoring) saveProjectToStorage();
+        }
+
+        function calculateSimplifiedMethod() {
+            const area = parseFloat(document.getElementById('simp-area').value) || 0;
+            const age = document.getElementById('simp-age').value;
+            const zone = document.getElementById('simp-zone').value;
+            const sun = document.getElementById('simp-sun').value;
+            const walls = document.getElementById('simp-walls').value;
+
+            // 1. Establecer Cargas Base por m² (W/m²)
+            let baseHeating = 85; // Medio
+            if(age === 'nuevo') baseHeating = 60;
+            if(age === 'antiguo') baseHeating = 110;
+
+            let baseCooling = 100; // Medio
+            if(age === 'nuevo') baseCooling = 80;
+            if(age === 'antiguo') baseCooling = 120;
+
+            // 2. Factores Invierno (Calefacción)
+            const f1_h = {'A': 0.8, 'B': 0.9, 'C': 1.0, 'D': 1.1, 'E': 1.2}[zone];
+            const f2_h = sun === 'sombra' ? 1.15 : 1.0;
+            const f3_h = walls === 'muchas' ? 1.20 : 1.0;
+
+            const qHeating = area * baseHeating * f1_h * f2_h * f3_h;
+            const qHeatingTotal = qHeating * 1.10;
+
+            // 3. Factores Verano (Refrigeración)
+            const f1_c = {'A': 1.2, 'B': 1.1, 'C': 1.0, 'D': 0.9, 'E': 0.8}[zone];
+            const f2_c = sun === 'sombra' ? 0.85 : 1.15;
+            const f3_c = walls === 'muchas' ? 1.20 : 1.0;
+
+            const qCooling = area * baseCooling * f1_c * f2_c * f3_c;
+            const qCoolingTotal = qCooling * 1.10;
+
+            // 4. Actualizar Interfaz Simplificada
+            if(document.getElementById('simp-res-heat-w')) {
+                document.getElementById('simp-res-heat-w').innerHTML = Math.round(qHeatingTotal) + ' <span class="text-sm font-normal text-gray-500 dark:text-slate-400">W</span>';
+                document.getElementById('simp-res-heat-kcal').innerText = Math.round(qHeatingTotal * 0.86) + ' kcal/h';
+            }
+            if(document.getElementById('simp-res-cool-w')) {
+                document.getElementById('simp-res-cool-w').innerHTML = Math.round(qCoolingTotal) + ' <span class="text-sm font-normal text-gray-500 dark:text-slate-400">W</span>';
+                document.getElementById('simp-res-cool-fg').innerText = Math.round(qCoolingTotal * 0.86) + ' fg/h';
+            }
+        }
+
+        function calculateAll() {
+            // 1. Obtener Condiciones
+            const vText = parseFloat(document.getElementById('v-ext-t').value) || 0;
+            const vTint = parseFloat(document.getElementById('v-int-t').value) || 0;
+            const vDw = parseFloat(document.getElementById('v-dw').value) || 0;
+            const vDT = vText - vTint; // dT Verano
+
+            const iText = parseFloat(document.getElementById('i-ext-t').value) || 0;
+            const iTint = parseFloat(document.getElementById('i-int-t').value) || 0;
+            const iDT = iTint - iText; // dT Invierno
+
+            // Corrección por altitud (Densidad del aire)
+            const alt = parseFloat(document.getElementById('proj-alt')?.value) || 0;
+            const rhoFactor = Math.exp(-0.000118 * alt);
+            const coefSens = 0.34 * rhoFactor;
+            const coefLat = 0.84 * rhoFactor;
+
+            const chartVData = {};
+            const chartIData = {};
+
+            // 2. Calcular Verano
+            let sumVSens = 0, sumVLat = 0;
+            document.querySelectorAll('.verano-data-row').forEach(row => {
+                const type = row.querySelector('.row-type-v').value;
+                const cant = parseFloat(row.querySelector('.row-cant').value) || 0;
+                const v1 = parseFloat(row.querySelector('.row-val1').value) || 0;
+                const v2Input = row.querySelector('.row-val2');
+                
+                // Forzar dT si es vidrio_trans exterior
+                if(type === 'vidrio_trans') { v2Input.value = vDT; }
+                
+                const v2 = parseFloat(v2Input.value) || 0;
+                let qSens = 0, qLat = 0;
+
+                if(type === 'opaco' || type === 'particion_int' || type === 'vidrio_trans' || type === 'vidrio_rad') { 
+                    qSens = cant * v1 * v2; 
+                } 
+                else if(type === 'ventilacion') { 
+                    qSens = cant * coefSens * vDT;  
+                    qLat = cant * coefLat * vDw;   
+                }
+                else if(type === 'personas') {
+                    qSens = cant * v1;
+                    qLat = cant * v2;
+                }
+                else if(type === 'equipos') {
+                    qSens = cant * v1;
+                }
+
+                row.querySelector('.row-res-s').innerText = Math.round(qSens);
+                if(type === 'ventilacion' || type === 'personas') {
+                    row.querySelector('.row-res-l').innerText = Math.round(qLat);
+                }
+                
+                sumVSens += qSens; sumVLat += qLat;
+
+                const typeLabel = row.querySelector('.row-type-v option:checked').text.split('(')[0].trim();
+                chartVData[typeLabel] = (chartVData[typeLabel] || 0) + qSens + qLat;
+            });
+
+            // 3. Calcular Invierno
+            let sumISens = 0, sumITrans = 0, sumIVent = 0;
+            
+            document.querySelectorAll('.invierno-data-row').forEach(row => {
+                const type = row.querySelector('.row-type-i').value;
+                const cant = parseFloat(row.querySelector('.row-cant').value) || 0;
+                const u = parseFloat(row.querySelector('.row-u').value) || 0;
+                const dtInput = row.querySelector('.row-dt');
+                
+                // Actualizar UI con el dT global solo si es elemento exterior
+                if(type === 'transmision_ext' || type === 'ventilacion') {
+                    dtInput.value = iDT; 
+                }
+                
+                let rowDT = parseFloat(dtInput.value) || 0;
+                let q = cant * u * rowDT;
+                
+                if(type === 'ventilacion') {
+                    q = cant * coefSens * rowDT;
+                }
+
+                row.querySelector('.row-res-s').innerText = Math.round(q);
+                sumISens += q;
+
+                if(type.includes('transmision')) sumITrans += q;
+                if(type === 'ventilacion') sumIVent += q;
+
+                const typeLabel = row.querySelector('.row-type-i option:checked').text.split('(')[0].trim();
+                chartIData[typeLabel] = (chartIData[typeLabel] || 0) + q;
+            });
+
+            // 4. Actualizar Interfaz (Verano)
+            document.getElementById('tot-v-sens').innerText = Math.round(sumVSens) + ' W';
+            document.getElementById('tot-v-lat').innerText = Math.round(sumVLat) + ' W';
+            document.getElementById('res-v-sens-w').innerText = Math.round(sumVSens) + ' W';
+            document.getElementById('res-v-lat-w').innerText = Math.round(sumVLat) + ' W';
+            
+            const totalVerano = sumVSens + sumVLat;
+            document.getElementById('res-v-total-kw').innerHTML = (totalVerano/1000).toFixed(2) + ' <span class="text-sm font-normal text-slate-500">kW</span>';
+            document.getElementById('res-v-frig').innerText = Math.round(totalVerano * 0.86) + ' fg/h';
+            
+            const fcs = totalVerano > 0 ? (sumVSens / totalVerano).toFixed(2) : "0.00";
+            document.getElementById('res-v-fcs').innerText = 'FCS: ' + fcs;
+
+            // 5. Actualizar Interfaz (Invierno)
+            document.getElementById('tot-i-sens').innerText = Math.round(sumISens) + ' W';
+            document.getElementById('res-i-trans-w').innerText = Math.round(sumITrans) + ' W';
+            document.getElementById('res-i-vent-w').innerText = Math.round(sumIVent) + ' W';
+            
+            document.getElementById('res-i-total-kw').innerHTML = (sumISens/1000).toFixed(2) + ' <span class="text-sm font-normal text-slate-500">kW</span>';
+            document.getElementById('res-i-kcal').innerText = Math.round(sumISens * 0.86) + ' kcal/h';
+
+            calculateAirflow();
+            calculateRenewable();
+            updateCharts(chartVData, chartIData);
+        }
+
+        function clearTbodies(season) {
+            if (season === 'verano') {
+                ['tbody-v-opacos', 'tbody-v-huecos', 'tbody-v-vent', 'tbody-v-int'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) el.innerHTML = '';
+                });
+            } else {
+                ['tbody-i-opacos', 'tbody-i-huecos', 'tbody-i-vent'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) el.innerHTML = '';
+                });
+            }
+        }
+
+        // --- FUNCIONES DE GUARDADO Y EXPORTACIÓN ---
+        function getProjectData() {
+            const data = {
+                config: {
+                    vExtT: document.getElementById('v-ext-t').value,
+                    vIntT: document.getElementById('v-int-t').value,
+                    vDw: document.getElementById('v-dw').value,
+                    iExtT: document.getElementById('i-ext-t').value,
+                    iIntT: document.getElementById('i-int-t').value,
+                    projProvincia: document.getElementById('proj-provincia')?.value || '',
+                    projAlt: document.getElementById('proj-alt')?.value || 0,
+                    simpArea: document.getElementById('simp-area').value,
+                    simpAge: document.getElementById('simp-age').value,
+                    simpZone: document.getElementById('simp-zone').value,
+                    simpSun: document.getElementById('simp-sun').value,
+                    simpWalls: document.getElementById('simp-walls').value
+                },
+                verano: [],
+                invierno: []
+            };
+
+            document.querySelectorAll('.verano-data-row').forEach(row => {
+                data.verano.push({
+                    desc: row.querySelector('.row-desc').value,
+                    type: row.querySelector('.row-type-v').value,
+                    orient: row.querySelector('.row-orient').value,
+                    cant: row.querySelector('.row-cant').value,
+                    val1: row.querySelector('.row-val1').value,
+                    val2: row.querySelector('.row-val2').value
+                });
+            });
+
+            document.querySelectorAll('.invierno-data-row').forEach(row => {
+                data.invierno.push({
+                    desc: row.querySelector('.row-desc').value,
+                    type: row.querySelector('.row-type-i').value,
+                    orient: row.querySelector('.row-orient').value,
+                    cant: row.querySelector('.row-cant').value,
+                    u: row.querySelector('.row-u').value,
+                    dt: row.querySelector('.row-dt').value
+                });
+            });
+
+            return data;
+        }
+
+        function loadProjectData(data) {
+            isRestoring = true;
+            
+            // Cargar Config
+            if(data.config) {
+                document.getElementById('v-ext-t').value = data.config.vExtT || 34;
+                document.getElementById('v-int-t').value = data.config.vIntT || 25;
+                document.getElementById('v-dw').value = data.config.vDw || 5;
+                document.getElementById('i-ext-t').value = data.config.iExtT || 2;
+                document.getElementById('i-int-t').value = data.config.iIntT || 21;
+                
+                if(data.config.projProvincia !== undefined) {
+                    const provInput = document.getElementById('proj-provincia');
+                    if(provInput) provInput.value = data.config.projProvincia;
+                }
+
+                if(data.config.projAlt) {
+                    const altInput = document.getElementById('proj-alt');
+                    if(altInput) altInput.value = data.config.projAlt;
+                }
+                
+                if(data.config.simpArea) document.getElementById('simp-area').value = data.config.simpArea;
+                if(data.config.simpAge) document.getElementById('simp-age').value = data.config.simpAge;
+                if(data.config.simpZone) document.getElementById('simp-zone').value = data.config.simpZone;
+                if(data.config.simpSun) document.getElementById('simp-sun').value = data.config.simpSun;
+                if(data.config.simpWalls) document.getElementById('simp-walls').value = data.config.simpWalls;
+            }
+
+            // Cargar Verano
+            clearTbodies('verano');
+            if(data.verano && data.verano.length > 0) {
+                data.verano.forEach(r => {
+                    addRowVerano(r.desc, r.type, r.cant, r.val1, r.val2, r.orient);
+                });
+            }
+
+            // Cargar Invierno
+            clearTbodies('invierno');
+            if(data.invierno && data.invierno.length > 0) {
+                data.invierno.forEach(r => {
+                    addRowInvierno(r.desc, r.type, r.cant, r.u, r.dt, r.orient);
+                });
+            }
+
+            isRestoring = false;
+            calculateAll();
+            calculateSimplifiedMethod();
+        }
+
+        function saveProjectToStorage() {
+            const data = getProjectData();
+            localStorage.setItem('hds_thermal_project_standalone', JSON.stringify(data));
+            
+            // Animación de guardado
+            const ind = document.getElementById('save-indicator');
+            ind.style.opacity = '1';
+            setTimeout(() => { ind.style.opacity = '0'; }, 1500);
+        }
+
+        function loadProjectFromStorage() {
+            const stored = localStorage.getItem('hds_thermal_project_standalone');
+            if(stored) {
+                try {
+                    const data = JSON.parse(stored);
+                    loadProjectData(data);
+                    return true;
+                } catch(e) { console.error("Error cargando guardado local", e); }
+            }
+            return false;
+        }
+
+        function exportProject() {
+            const data = getProjectData();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Proyecto_Cargas_Termicas.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importProject(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    loadProjectData(data);
+                    saveProjectToStorage();
+                    
+                    const t = document.getElementById('toast');
+                    if(t) {
+                        t.innerText = '✓ Proyecto JSON importado correctamente';
+                        t.classList.remove('hidden'); 
+                        setTimeout(() => { t.classList.add('hidden'); }, 3000);
+                    }
+                } catch(err) {
+                    console.error("Error al leer el archivo JSON.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input
+        }
+
+        function confirmReset(tab) {
+            if(confirm('¿Estás seguro de que quieres vaciar la tabla seleccionada? Se eliminarán todas las filas.')) {
+                clearTbodies(tab);
+                triggerCalculate();
+            }
+        }
+
+        function loadDefaultVerano() {
+            clearTbodies('verano');
+        }
+
+        function loadDefaultInvierno() {
+            clearTbodies('invierno');
+        }
+
+        let isSimulationLoaded = false;
+
+        function loadSimulationPlan() {
+            const btn = document.getElementById('btn-simulate');
+            const t = document.getElementById('toast');
+
+            if (!isSimulationLoaded) {
+                if(!confirm('¿Cargar datos de simulación del plano? Esto reemplazará y eliminará todas las filas actuales de las tablas.')) return;
+
+                // Setup general parameters from Plano
+                document.getElementById('simp-area').value = 83; // Área de la tabla del plano
+                document.getElementById('simp-age').value = "nuevo";
+                document.getElementById('simp-zone').value = "B";
+                document.getElementById('simp-sun').value = "sol";
+                document.getElementById('simp-walls').value = "muchas";
+
+                // Limpiar tablas detalladas
+                clearTbodies('verano');
+                clearTbodies('invierno');
+
+                // Verano (Valores extraídos de la leyenda de la imagen)
+                addRowVerano('Muros Exteriores', 'opaco', 45, 0.35, 18, 'S');
+                addRowVerano('Cubierta', 'opaco', 83, 0.28, 24, 'H');
+                addRowVerano('Radiación Ventanas', 'vidrio_rad', 12, 450, 0.45, 'S');
+                addRowVerano('Transmisión Ventanas PVC', 'vidrio_trans', 12, 1.8, 9, 'S');
+                addRowVerano('Ventilación (Vivienda)', 'ventilacion', 120, 0.34, 0.84, '-');
+                addRowVerano('Ocupación (Sensible)', 'personas', 4, 65, 0, '-');
+                addRowVerano('Ocupación (Latente)', 'personas', 4, 0, 45, '-');
+                addRowVerano('Equipos e Iluminación', 'equipos', 83, 5, 0, '-');
+
+                // Invierno (Valores extraídos de la leyenda de la imagen)
+                addRowInvierno('Muros Exteriores', 'transmision_ext', 45, 0.35, 19, 'S');
+                addRowInvierno('Cubierta', 'transmision_ext', 83, 0.28, 19, 'H');
+                addRowInvierno('Suelo (CTE)', 'transmision_ext', 83, 0.45, 10, 'H');
+                addRowInvierno('Ventanas PVC 4/16/4', 'transmision_ext', 12, 1.8, 19, 'S');
+                addRowInvierno('Ventilación (Vivienda)', 'ventilacion', 120, 0.34, 19, '-');
+
+                isSimulationLoaded = true;
+                if(btn) {
+                    btn.innerHTML = '🔄 Quitar Simulación';
+                    btn.classList.replace('bg-indigo-600', 'bg-red-600');
+                    btn.classList.replace('hover:bg-indigo-500', 'hover:bg-red-500');
+                    btn.classList.replace('shadow-indigo-600/20', 'shadow-red-600/20');
+                }
+                
+                if(t) {
+                    t.innerText = '✓ Simulación de Plano (83m²) Cargada';
+                    t.classList.remove('hidden'); 
+                    setTimeout(() => { t.classList.add('hidden'); }, 3000);
+                }
+            } else {
+                if(!confirm('¿Quitar simulación? Esto vaciará las tablas de cálculo detallado.')) return;
+
+                // Revert to default simplified
+                document.getElementById('simp-area').value = 100;
+                document.getElementById('simp-age').value = "medio";
+                document.getElementById('simp-zone').value = "B";
+                document.getElementById('simp-sun').value = "sol";
+                document.getElementById('simp-walls').value = "pocas";
+
+                clearTbodies('verano');
+                clearTbodies('invierno');
+
+                isSimulationLoaded = false;
+                if(btn) {
+                    btn.innerHTML = '🏠 Simular Plano';
+                    btn.classList.replace('bg-red-600', 'bg-indigo-600');
+                    btn.classList.replace('hover:bg-red-500', 'hover:bg-indigo-500');
+                    btn.classList.replace('shadow-red-600/20', 'shadow-indigo-600/20');
+                }
+
+                if(t) {
+                    t.innerText = '✓ Tablas vaciadas';
+                    t.classList.remove('hidden'); 
+                    setTimeout(() => { t.classList.add('hidden'); }, 3000);
+                }
+            }
+
+            // Recalcular todo
+            triggerCalculate();
+            triggerSimplifiedCalculate();
+        }
+
+        function toggleVisibility(id, btnElement) {
+            const el = document.getElementById(id);
+            // Buscar el SVG que funciona como chevron (usualmente al final del flex o en el boton)
+            const svgs = btnElement.querySelectorAll('svg');
+            const chevron = svgs.length > 0 ? svgs[svgs.length - 1] : null;
+
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                if (chevron && chevron.parentElement.tagName === 'BUTTON') chevron.parentElement.classList.remove('rotate-180');
+                else if (chevron) chevron.classList.remove('rotate-180');
+            } else {
+                el.classList.add('hidden');
+                if (chevron && chevron.parentElement.tagName === 'BUTTON') chevron.parentElement.classList.add('rotate-180');
+                else if (chevron) chevron.classList.add('rotate-180');
+            }
+        }
+
+        function onSeasonChange() {
+            let season = document.getElementById('dim-season').value;
+            let tLocInput = document.getElementById('dim-tloc');
+            let tImpInput = document.getElementById('dim-timp');
+            
+            if (season === 'verano') {
+                tLocInput.value = 24; 
+                tImpInput.value = 12; 
+            } else {
+                tLocInput.value = 21; 
+                tImpInput.value = 35; 
+            }
+            
+            triggerCalculate();
+        }
+
+        function calculateAirflow() {
+            let season = document.getElementById('dim-season')?.value || 'verano';
+            let qs = 0;
+            
+            if (season === 'verano') {
+                const vsens = document.getElementById('tot-v-sens');
+                qs = vsens ? parseFloat(vsens.innerText) : 0;
+            } else {
+                const isens = document.getElementById('tot-i-sens');
+                qs = isens ? parseFloat(isens.innerText) : 0;
+            }
+            
+            if(document.getElementById('dim-qs')) document.getElementById('dim-qs').innerText = (qs || 0).toFixed(0) + ' W';
+            
+            let tLocInput = document.getElementById('dim-tloc');
+            let tImpInput = document.getElementById('dim-timp');
+            let tLocAlert = document.getElementById('tloc-alert');
+            let timpAlert = document.getElementById('timp-alert');
+            
+            if(!tLocInput || !tImpInput) return;
+
+            let tLoc = parseFloat(tLocInput.value) || 24;
+            let tImp = parseFloat(tImpInput.value) || 12;
+            
+            if (season === 'verano') {
+                if (tLoc < 23 || tLoc > 25) {
+                    tLocInput.classList.add('border-red-500', 'text-red-400', 'bg-red-950/30');
+                    tLocAlert.className = 'text-[9px] text-red-400 mt-1 h-3 font-bold transition-colors';
+                    tLocAlert.innerText = '❌ Fuera límite RITE IT 1.1.4 (23-25°C)';
+                } else {
+                    tLocInput.classList.remove('border-red-500', 'text-red-400', 'bg-red-950/30');
+                    tLocAlert.className = 'text-[9px] text-emerald-600 dark:text-emerald-400 mt-1 h-3 transition-colors';
+                    tLocAlert.innerText = '✓ RITE IT 1.1.4 Cumplido';
+                }
+            } else { 
+                if (tLoc < 21 || tLoc > 23) {
+                    tLocInput.classList.add('border-red-500', 'text-red-400', 'bg-red-950/30');
+                    tLocAlert.className = 'text-[9px] text-red-400 mt-1 h-3 font-bold transition-colors';
+                    tLocAlert.innerText = '❌ Fuera límite RITE IT 1.1.4 (21-23°C)';
+                } else {
+                    tLocInput.classList.remove('border-red-500', 'text-red-400', 'bg-red-950/30');
+                    tLocAlert.className = 'text-[9px] text-emerald-600 dark:text-emerald-400 mt-1 h-3 transition-colors';
+                    tLocAlert.innerText = '✓ RITE IT 1.1.4 Cumplido';
+                }
+            }
+
+            let dt = season === 'verano' ? (tLoc - tImp) : (tImp - tLoc);
+            
+            if (dt > 15 && season === 'invierno') {
+                timpAlert.innerText = '⚠️ ΔT Calefacción > 15°C';
+            } else if (dt > 12 && season === 'verano') {
+                timpAlert.innerText = '⚠️ ΔT Frío > 12°C';
+            } else if (dt <= 0) {
+                timpAlert.innerText = '❌ T.Imp incorrecta';
+            } else {
+                timpAlert.innerText = '✓ ΔT Adecuado';
+            }
+
+            let caudal = 0;
+            if (dt > 0 && qs > 0) caudal = qs / (0.34 * dt);
+            
+            if(document.getElementById('dim-caudal')) document.getElementById('dim-caudal').innerHTML = caudal.toFixed(0) + ' <span class="text-xs font-normal text-blue-700 dark:text-blue-200">m³/h</span>';
+        }
+
+        function calculateRenewable() {
+            let isens = document.getElementById('tot-i-sens');
+            let qInvierno = isens ? parseFloat(isens.innerText) : 0;
+            
+            if(document.getElementById('ren-demanda')) document.getElementById('ren-demanda').innerText = (qInvierno || 0).toFixed(0) + ' W';
+
+            let spfInput = document.getElementById('ren-spf');
+            let spfAlert = document.getElementById('spf-alert');
+            
+            if(!spfInput || !spfAlert) return;
+
+            let spf = parseFloat(spfInput.value) || 0;
+            let eRes = 0;
+            let pct = 0;
+
+            if (spf > 2.5) {
+                spfInput.classList.remove('border-red-500', 'text-red-400', 'bg-red-950/30');
+                spfAlert.innerText = '✓ Válido Renovable CTE DB-HE4 (SPF > 2.5)';
+                pct = (1 - (1 / spf)) * 100;
+                eRes = qInvierno * (1 - (1 / spf));
+            } else {
+                spfInput.classList.add('border-red-500', 'text-red-400', 'bg-red-950/30');
+                spfAlert.innerText = '❌ No computa CTE DB-HE4 (SPF ≤ 2.5)';
+                pct = 0;
+                eRes = 0;
+            }
+
+            if(document.getElementById('ren-pct')) document.getElementById('ren-pct').innerText = pct.toFixed(1) + ' %';
+            if(document.getElementById('ren-w')) document.getElementById('ren-w').innerHTML = eRes.toFixed(0) + ' <span class="text-xs font-normal text-emerald-700 dark:text-emerald-200">W</span>';
+        }
+
+        function downloadWordReport(mode) {
+            let mainContent = document.querySelector('main').cloneNode(true);
+            
+            // Filtrar según el modo elegido
+            if (mode === 'detallado') {
+                const simpSec = mainContent.querySelector('#thermal-simplified-section');
+                if (simpSec) simpSec.remove();
+            } else if (mode === 'simplificado') {
+                const detSec = mainContent.querySelector('#thermal-detailed-section');
+                if (detSec) detSec.remove();
+            }
+            // Asegurarnos que ambas secciones están visibles para el clon (si aplican)
+            mainContent.querySelectorAll('.hidden').forEach(el => {
+                if (el.id === 'thermal-simplified-section' && mode !== 'detallado') el.classList.remove('hidden');
+                if (el.id === 'thermal-detailed-section' && mode !== 'simplificado') el.classList.remove('hidden');
+                if (el.id === 'tab-verano' || el.id === 'tab-invierno') el.classList.remove('hidden'); // Mostrar ambas tablas
+                // Expandir colapsables
+                if (el.id === 'condiciones-content' || el.id === 'dim-caudal-content' || el.id === 'renovable-content') el.classList.remove('hidden');
+                if (el.id && el.id.startsWith('tbody-')) el.classList.remove('hidden');
+            });
+            
+            // Remove non-printable elements
+            mainContent.querySelectorAll('.no-print, .action-column, button, svg, .drag-handle').forEach(el => el.remove());
+            
+            // Reemplazar los Canvas de Chart.js por imágenes para Word
+            const originalCanvases = document.querySelectorAll('canvas');
+            const clonedCanvases = mainContent.querySelectorAll('canvas');
+            
+            originalCanvases.forEach((origCanvas, index) => {
+                const cloneCanvas = clonedCanvases[index];
+                if (origCanvas && cloneCanvas) {
+                    const imgUrl = origCanvas.toDataURL('image/png');
+                    const imgElement = document.createElement('img');
+                    imgElement.src = imgUrl;
+                    imgElement.style.maxWidth = '100%';
+                    imgElement.style.height = 'auto';
+                    cloneCanvas.replaceWith(imgElement);
+                }
+            });
+
+            // Style tables for Word
+            mainContent.querySelectorAll('table').forEach(table => {
+                table.setAttribute('border', '1');
+                table.style.borderCollapse = 'collapse';
+                table.style.width = '100%';
+                table.style.marginBottom = '20px';
+                table.style.fontFamily = 'Arial, sans-serif';
+                table.style.fontSize = '11pt';
+            });
+
+            mainContent.querySelectorAll('th, td').forEach(cell => {
+                cell.style.padding = '8px';
+                cell.style.border = '1px solid #ccc';
+            });
+            
+            mainContent.querySelectorAll('th').forEach(th => {
+                th.style.backgroundColor = '#f1f5f9';
+                th.style.fontWeight = 'bold';
+                th.style.textAlign = 'left';
+            });
+
+            // Reemplazar inputs y textareas por span para mantener visibilidad en Word
+            mainContent.querySelectorAll('input, select, textarea').forEach(el => {
+                const isCheckbox = el.type === 'checkbox';
+                const textVal = isCheckbox ? (el.checked ? '[X]' : '[ ]') : (el.tagName.toLowerCase() === 'textarea' ? el.value.replace(/\n/g, '<br>') : (el.tagName.toLowerCase() === 'select' ? el.options[el.selectedIndex]?.text : el.value));
+                
+                const parent = el.parentElement;
+                if (parent && parent.tagName.toLowerCase() === 'td') {
+                    parent.innerHTML = textVal;
+                } else {
+                    const span = document.createElement('span');
+                    span.innerHTML = textVal + ' ';
+                    span.style.fontWeight = 'bold';
+                    el.replaceWith(span);
+                }
+            });
+
+            let modeTitle = mode === 'ambos' ? 'Completo (Normativo y Simplificado)' : (mode === 'detallado' ? 'Detallado (Normativo)' : 'Simplificado (Alpino)');
+
+            const html = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head><meta charset='utf-8'><title>Informe de Cargas Térmicas</title></head>
+                <body style="font-family: Arial, sans-serif; color: #333;">
+                    <h1 style="text-align: center; color: #1e293b;">Informe Técnico de Cargas Térmicas</h1>
+                    <h3 style="text-align: center; color: #475569;">Método: ${modeTitle}</h3>
+                    <hr>
+                    ${mainContent.innerHTML}
+                </body>
+                </html>
+            `;
+            
+            const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Informe_Cargas_${modeTitle}.doc`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            const t = document.getElementById('toast');
+            if(t) {
+                t.innerText = '✓ Informe Word (' + mode + ') generado';
+                t.classList.remove('hidden'); 
+                setTimeout(() => { t.classList.add('hidden'); }, 3000);
+            }
+        }
+
+        // --- CHARTS ---
+        let chartVInstance = null;
+        let chartIInstance = null;
+
+        function updateCharts(dataV, dataI) {
+            if(typeof Chart === 'undefined') return;
+            const ctxV = document.getElementById('chart-verano');
+            const ctxI = document.getElementById('chart-invierno');
+            
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#cbd5e1' : '#475569';
+            
+            const commonOptions = {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { color: textColor, font: { size: 10 } } }
+                }
+            };
+
+            const bgColors = ['#f97316', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'];
+
+            if(ctxV) {
+                if(chartVInstance) chartVInstance.destroy();
+                chartVInstance = new Chart(ctxV, {
+                    type: 'doughnut',
+                    data: { labels: Object.keys(dataV), datasets: [{ data: Object.values(dataV), backgroundColor: bgColors, borderWidth: 0 }] },
+                    options: commonOptions
+                });
+            }
+            if(ctxI) {
+                if(chartIInstance) chartIInstance.destroy();
+                chartIInstance = new Chart(ctxI, {
+                    type: 'doughnut',
+                    data: { labels: Object.keys(dataI), datasets: [{ data: Object.values(dataI), backgroundColor: bgColors, borderWidth: 0 }] },
+                    options: commonOptions
+                });
+            }
+        }
+
+        // --- U CALCULATOR MODAL ---
+        let currentUInput = null;
+
+        function openUCalc(btn) {
+            currentUInput = btn.previousElementSibling;
+            document.getElementById('modal-u-calc').classList.remove('hidden');
+            if(document.getElementById('u-calc-layers').children.length === 0) addULayer();
+            calculateUModal();
+        }
+        function closeUCalc() {
+            document.getElementById('modal-u-calc').classList.add('hidden');
+        }
+        function addULayer() {
+            const div = document.createElement('div');
+            div.className = "flex flex-col md:flex-row gap-2 items-start md:items-center layer-row w-full bg-slate-50/50 dark:bg-slate-800/30 p-2 rounded-lg border border-slate-100 dark:border-slate-700/50 transition-colors";
+            div.innerHTML = `
+                <div class="flex-grow w-full md:w-auto flex flex-col gap-1.5">
+                    <select onchange="if(this.value){ const r = this.closest('.layer-row'); r.querySelector('.mat-name').value = this.options[this.selectedIndex].text.split('(')[0].trim(); r.querySelector('.mat-lambda').value = this.value; calculateUModal(); this.value=''; }" class="text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded p-1.5 text-slate-600 dark:text-slate-300 outline-none w-full focus:border-amber-500 cursor-pointer">
+                        <option value="">+ Insertar material común...</option>
+                        <option value="0.49">Ladrillo hueco (λ=0.49)</option>
+                        <option value="0.87">Ladrillo macizo (λ=0.87)</option>
+                        <option value="1.63">Hormigón armado (λ=1.63)</option>
+                        <option value="1.00">Yeso / Escayola (λ=1.00)</option>
+                        <option value="1.40">Mortero de cemento (λ=1.40)</option>
+                        <option value="0.13">Madera (λ=0.13)</option>
+                        <option value="0.034">Aislante XPS / EPS (λ=0.034)</option>
+                        <option value="0.035">Lana Mineral (λ=0.035)</option>
+                        <option value="0.025">Poliuretano PUR (λ=0.025)</option>
+                        <option value="0.25">Placa Yeso Laminado (λ=0.25)</option>
+                    </select>
+                    <input type="text" placeholder="Material personalizado..." class="mat-name w-full bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-600 text-xs p-2 rounded outline-none text-slate-800 dark:text-slate-200 focus:border-amber-500 transition-colors">
+                </div>
+                <div class="w-full md:w-20 flex flex-row md:flex-col items-center md:items-stretch gap-2 md:gap-1">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase w-24 md:hidden">Espesor (m)</span>
+                    <input type="number" placeholder="e (m)" step="0.01" value="0.10" class="mat-esp w-full bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-600 text-xs p-2 rounded outline-none text-center text-slate-800 dark:text-slate-200 focus:border-amber-500 transition-colors" oninput="calculateUModal()">
+                </div>
+                <div class="w-full md:w-20 flex flex-row md:flex-col items-center md:items-stretch gap-2 md:gap-1">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase w-24 md:hidden">λ (W/mK)</span>
+                    <input type="number" placeholder="λ" step="0.001" value="0.040" class="mat-lambda w-full bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-600 text-xs p-2 rounded outline-none text-center text-slate-800 dark:text-slate-200 focus:border-amber-500 transition-colors" oninput="calculateUModal()">
+                </div>
+                <button onclick="this.closest('.layer-row').remove(); calculateUModal()" class="text-red-400 hover:bg-red-500 hover:text-white rounded-lg font-bold p-2 md:mt-7 transition-colors self-end md:self-auto border border-transparent hover:border-red-600 flex items-center justify-center w-8 h-8" title="Eliminar Capa">✕</button>
+            `;
+            document.getElementById('u-calc-layers').appendChild(div);
+            calculateUModal();
+        }
+        function calculateUModal() {
+            let rTotal = 0;
+            // Resistencias superficiales normativas según posición
+            const surfRes = parseFloat(document.getElementById('u-calc-type')?.value) || 0.17;
+            rTotal += surfRes; 
+            
+            document.querySelectorAll('#u-calc-layers .layer-row').forEach(row => {
+                const inputs = row.querySelectorAll('input[type="number"]');
+                const e = parseFloat(inputs[0].value) || 0;
+                const l = parseFloat(inputs[1].value) || 1;
+                if(l > 0) rTotal += (e / l);
+            });
+            
+            document.getElementById('u-calc-r').innerText = rTotal.toFixed(3) + ' m²K/W';
+            const u = rTotal > 0 ? (1 / rTotal) : 0;
+            document.getElementById('u-calc-res').innerText = u.toFixed(3);
+        }
+        function applyUCalc() {
+            if(currentUInput) {
+                currentUInput.value = document.getElementById('u-calc-res').innerText;
+                triggerCalculate();
+            }
+            closeUCalc();
+        }
+
+        // Inicializar aplicación
+        window.onload = () => {
+            initTheme();
+            initPlanoViewer();
+            const tbodies = ['tbody-v-opacos', 'tbody-v-huecos', 'tbody-v-vent', 'tbody-v-int', 'tbody-i-opacos', 'tbody-i-huecos', 'tbody-i-vent'];
+            tbodies.forEach(id => {
+                const el = document.getElementById(id);
+                if(el && typeof Sortable !== 'undefined') {
+                    new Sortable(el, { handle: '.drag-handle', animation: 150, onEnd: triggerCalculate });
+                }
+            });
+            if(!loadProjectFromStorage()) {
+                isRestoring = true;
+                loadDefaultVerano();
+                loadDefaultInvierno();
+                isRestoring = false;
+                calculateAll();
+            }
+            calculateSimplifiedMethod();
+            // Guardar el estado limpio inicial en el historial
+            setTimeout(() => saveStateToHistory(false), 500);
+        };
+    </script>
+</body>
+</html>
