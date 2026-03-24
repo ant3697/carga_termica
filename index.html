@@ -564,7 +564,7 @@
                                     <th class="p-3 border-b dark:border-slate-700 w-48 text-center">Tipo de Carga</th>
                                     <th class="p-3 border-b dark:border-slate-700 w-16 text-center">Orient.</th>
                                     <th class="p-3 border-b dark:border-slate-700 w-24 text-center">Cant/Área</th>
-                                    <th class="p-3 border-b dark:border-slate-700 w-24 text-center" title="Coeficientes sujetos a límites del CTE DB-HE1 (Ej. U_muro < 0.41)">U/Irr/W_s <span class="text-[8px] block normal-case font-normal text-slate-400 mt-1">(CTE DB-HE)</span></th>
+                                    <th class="p-3 border-b dark:border-slate-700 w-32 text-center" title="Coeficientes sujetos a límites del CTE DB-HE1 (Ej. U_muro < 0.41)">U/Irr/W_s <span class="text-[8px] block normal-case font-normal text-slate-400 mt-1">(CTE DB-HE)</span></th>
                                     <th class="p-3 border-b dark:border-slate-700 w-24 text-center" title="Diferencia de temperatura, CLTD (Inercia térmica) o Factor Solar">CLTD/ΔT/FS <span class="text-[8px] block normal-case font-normal text-slate-400 mt-1">(K / - )</span></th>
                                     <th class="p-3 border-b dark:border-slate-700 text-right w-28 bg-orange-50/50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400">Sensible (W)</th>
                                     <th class="p-3 border-b dark:border-slate-700 text-right w-28 bg-teal-50/50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400">Latente (W)</th>
@@ -692,7 +692,7 @@
                                     <th class="p-3 border-b dark:border-slate-700 w-56 text-center">Tipo de Pérdida</th>
                                     <th class="p-3 border-b dark:border-slate-700 w-16 text-center">Orient.</th>
                                     <th class="p-3 border-b dark:border-slate-700 w-28 text-center">Área / Caudal</th>
-                                    <th class="p-3 border-b dark:border-slate-700 w-28 text-center" title="Transmitancia U según límites CTE DB-HE1">U / Coef <span class="text-[8px] block normal-case font-normal text-slate-400 mt-1">(W/m²K)</span></th>
+                                    <th class="p-3 border-b dark:border-slate-700 w-32 text-center" title="Transmitancia U según límites CTE DB-HE1">U / Coef <span class="text-[8px] block normal-case font-normal text-slate-400 mt-1">(W/m²K)</span></th>
                                     <th class="p-3 border-b dark:border-slate-700 w-28 text-center">ΔT (K)</th>
                                     <th class="p-3 border-b dark:border-slate-700 text-right w-36 bg-blue-50/50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400">Pérdida Sens. (W)</th>
                                     <th class="p-3 border-b dark:border-slate-700 w-10 no-print"></th>
@@ -843,6 +843,42 @@
                     </div>
                 </div>
             </section>
+
+            <!-- NOTA DIDÁCTICA SOBRE SOBREDIMENSIONADO (EJERCICIO 3) -->
+            <div class="glass-card p-6 border border-indigo-200 dark:border-indigo-500/30 print-avoid-break bg-indigo-50/30 dark:bg-indigo-900/10">
+                <div class="flex items-start gap-4">
+                    <div class="bg-indigo-100 dark:bg-indigo-900/40 p-3 rounded-xl border border-indigo-200 dark:border-indigo-500/30 flex-shrink-0">
+                        <span class="text-2xl">⚖️</span>
+                    </div>
+                    <div>
+                        <h3 class="text-indigo-700 dark:text-indigo-400 font-bold text-sm uppercase tracking-widest mb-2">Nota: Cálculo Estricto vs. Potencia Instalada (Márgenes Comerciales)</h3>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 mb-3 leading-relaxed">
+                            Al aplicar la simulación del <strong>Ejercicio 3 (ref: Javier Ponce)</strong>, es vital comprender la diferencia entre la <em>carga térmica teórica calculada</em> y la <em>potencia real instalada</em>. En la práctica, los equipos comerciales imponen un sobredimensionado que actúa como margen de seguridad.
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                            <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
+                                <h4 class="text-[10px] font-black uppercase text-slate-500 mb-2 border-b border-slate-100 dark:border-slate-700 pb-1">Cálculo Estricto (Teórico)</h4>
+                                <p class="text-[11px] text-slate-500 mb-2">Demanda térmica pura según las pérdidas por transmisión y ventilación.</p>
+                                <ul class="text-[10px] text-slate-500 list-disc pl-4 space-y-1">
+                                    <li>En la simulación: <span class="font-mono font-bold text-slate-700 dark:text-slate-300">~ 7.427 W</span> (100%).</li>
+                                    <li>Asume condiciones ideales normativas.</li>
+                                    <li>No contempla pérdidas de distribución en tuberías.</li>
+                                </ul>
+                            </div>
+                            <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-indigo-100 dark:border-indigo-900 shadow-sm relative overflow-hidden">
+                                <div class="absolute -right-2 -top-2 bg-indigo-500 text-white text-[8px] font-bold px-4 py-1 rotate-45">REALIDAD</div>
+                                <h4 class="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 mb-2 border-b border-indigo-50 dark:border-indigo-900/50 pb-1">Potencia Instalada (Real)</h4>
+                                <p class="text-[11px] text-slate-500 mb-2">Capacidad efectiva de los radiadores instalados tras seleccionar el nº de elementos.</p>
+                                <ul class="text-[10px] text-slate-500 list-disc pl-4 space-y-1">
+                                    <li>En la simulación: <span class="font-mono font-bold text-indigo-600 dark:text-indigo-400">~ 9.820 W</span> con 86 elementos de radiador.</li>
+                                    <li>Redondeo al número entero superior de emisores.</li>
+                                    <li>Genera un <strong>sobredimensionado habitual del 15% al 30%</strong> (margen de seguridad implícito).</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Dimensionado de Caudal -->
             <div class="glass-card p-6 border border-blue-200 dark:border-blue-500/30 print-avoid-break">
@@ -1353,9 +1389,9 @@
                 </td>
                 <td class="p-2"><input type="number" step="any" value="${cant}" class="row-cant text-center font-mono w-full bg-transparent focus:outline-none text-xs" oninput="triggerCalculate()"></td>
                 <td class="p-2 relative">
-                    <div class="flex items-center">
-                        <input type="number" step="any" value="${val1}" class="row-val1 text-center font-mono w-full bg-transparent focus:outline-none text-xs" oninput="triggerCalculate()">
-                        <button onclick="openUCalc(this)" class="btn-u-calc text-xs ml-1 bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-600 rounded p-1 shadow-sm opacity-90 hover:opacity-100 hover:bg-amber-200 dark:hover:bg-amber-800 transition-all no-print" title="Calculadora de Transmitancia U">🧮</button>
+                    <div class="flex items-center gap-1">
+                        <input type="number" step="any" value="${val1}" class="row-val1 text-center font-mono w-full min-w-[60px] bg-transparent focus:outline-none text-xs" oninput="triggerCalculate()">
+                        <button onclick="openUCalc(this)" class="btn-u-calc text-xs shrink-0 bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-600 rounded p-1 shadow-sm opacity-90 hover:opacity-100 hover:bg-amber-200 dark:hover:bg-amber-800 transition-all no-print" title="Calculadora de Transmitancia U">🧮</button>
                     </div>
                 </td>
                 <td class="p-2"><input type="number" step="any" value="${val2}" class="row-val2 text-center font-mono w-full bg-transparent focus:outline-none text-xs" oninput="triggerCalculate()"></td>
@@ -1463,9 +1499,9 @@
                 </td>
                 <td class="p-2"><input type="number" step="any" value="${cant}" class="row-cant text-center font-mono w-full bg-transparent focus:outline-none text-xs" oninput="triggerCalculate()"></td>
                 <td class="p-2 relative">
-                    <div class="flex items-center">
-                        <input type="number" step="any" value="${u}" class="row-u text-center font-mono w-full bg-transparent focus:outline-none text-xs" oninput="triggerCalculate()">
-                        <button onclick="openUCalc(this)" class="btn-u-calc text-xs ml-1 bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-600 rounded p-1 shadow-sm opacity-90 hover:opacity-100 hover:bg-amber-200 dark:hover:bg-amber-800 transition-all no-print" title="Calculadora de Transmitancia U">🧮</button>
+                    <div class="flex items-center gap-1">
+                        <input type="number" step="any" value="${u}" class="row-u text-center font-mono w-full min-w-[60px] bg-transparent focus:outline-none text-xs" oninput="triggerCalculate()">
+                        <button onclick="openUCalc(this)" class="btn-u-calc text-xs shrink-0 bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-600 rounded p-1 shadow-sm opacity-90 hover:opacity-100 hover:bg-amber-200 dark:hover:bg-amber-800 transition-all no-print" title="Calculadora de Transmitancia U">🧮</button>
                     </div>
                 </td>
                 <td class="p-2"><input type="number" step="any" value="${dt}" class="row-dt text-center font-mono w-full bg-gray-100 dark:bg-slate-800/50 border border-transparent rounded focus:outline-none text-xs" oninput="triggerCalculate()"></td>
@@ -1924,33 +1960,39 @@
             if (!isSimulationLoaded) {
                 if(!confirm('¿Cargar datos de simulación del plano? Esto reemplazará y eliminará todas las filas actuales de las tablas.')) return;
 
-                // Setup general parameters from Plano
-                document.getElementById('simp-area').value = 83; // Área de la tabla del plano
-                document.getElementById('simp-age').value = "nuevo";
-                document.getElementById('simp-zone').value = "B";
+                // Setup general parameters from Plano (Ejercicio 3 - Javier Ponce)
+                document.getElementById('simp-area').value = 70.25; // Área total del Ejercicio 3
+                document.getElementById('simp-age').value = "antiguo"; // Valores U pre-CTE
+                document.getElementById('simp-zone').value = "D"; // Temp ext -2°C
                 document.getElementById('simp-sun').value = "sol";
                 document.getElementById('simp-walls').value = "muchas";
+
+                // Modificar temperaturas de diseño para coincidir con el ejercicio
+                document.getElementById('i-ext-t').value = -2;
+                document.getElementById('i-int-t').value = 20;
 
                 // Limpiar tablas detalladas
                 clearTbodies('verano');
                 clearTbodies('invierno');
 
-                // Verano (Valores extraídos de la leyenda de la imagen)
-                addRowVerano('Muros Exteriores', 'opaco', 45, 0.35, 18, 'S');
-                addRowVerano('Cubierta', 'opaco', 83, 0.28, 24, 'H');
-                addRowVerano('Radiación Ventanas', 'vidrio_rad', 12, 450, 0.45, 'S');
-                addRowVerano('Transmisión Ventanas PVC', 'vidrio_trans', 12, 1.8, 9, 'S');
-                addRowVerano('Ventilación (Vivienda)', 'ventilacion', 120, 0.34, 0.84, '-');
+                // Verano (Adaptado con los coeficientes del Ejercicio 3)
+                addRowVerano('Muros Exteriores (U=0.60)', 'opaco', 81.3, 0.60, 15, 'S');
+                addRowVerano('Techo (U=0.90)', 'opaco', 70.25, 0.90, 24, 'H');
+                addRowVerano('Radiación Ventanas', 'vidrio_rad', 12.3, 450, 0.70, 'S');
+                addRowVerano('Transmisión Ventanas (U=4.90)', 'vidrio_trans', 12.3, 4.90, 9, 'S');
+                addRowVerano('Ventilación (1 ren/h)', 'ventilacion', 196.7, 0.34, 0.84, '-');
                 addRowVerano('Ocupación (Sensible)', 'personas', 4, 65, 0, '-');
                 addRowVerano('Ocupación (Latente)', 'personas', 4, 0, 45, '-');
-                addRowVerano('Equipos e Iluminación', 'equipos', 83, 5, 0, '-');
+                addRowVerano('Equipos e Iluminación', 'equipos', 70.25, 5, 0, '-');
 
-                // Invierno (Valores extraídos de la leyenda de la imagen)
-                addRowInvierno('Muros Exteriores', 'transmision_ext', 45, 0.35, 19, 'S');
-                addRowInvierno('Cubierta', 'transmision_ext', 83, 0.28, 19, 'H');
-                addRowInvierno('Suelo (CTE)', 'transmision_ext', 83, 0.45, 10, 'H');
-                addRowInvierno('Ventanas PVC 4/16/4', 'transmision_ext', 12, 1.8, 19, 'S');
-                addRowInvierno('Ventilación (Vivienda)', 'ventilacion', 120, 0.34, 19, '-');
+                // Invierno (Valores extraídos de la leyenda de la imagen y video)
+                addRowInvierno('Muros Exteriores (U=0.60)', 'transmision_ext', 81.3, 0.60, 22, 'N');
+                addRowInvierno('Ventanas V y v (U=4.90)', 'transmision_ext', 12.3, 4.90, 22, 'N');
+                addRowInvierno('Puerta Exterior (U=4.90)', 'transmision_ext', 1.6, 4.90, 22, 'N');
+                addRowInvierno('Muro Interior a LNC (U=0.80)', 'transmision_int', 32.2, 0.80, 12, '-');
+                addRowInvierno('Suelo sobre LNC (U=1.15)', 'transmision_int', 70.25, 1.15, 12, 'H');
+                addRowInvierno('Techo bajo LNC (U=0.90)', 'transmision_int', 70.25, 0.90, 12, 'H');
+                addRowInvierno('Ventilación (1 ren/h = 196.7 m³/h)', 'ventilacion', 196.7, 0.34, 22, '-');
 
                 isSimulationLoaded = true;
                 if(btn) {
@@ -1961,7 +2003,7 @@
                 }
                 
                 if(t) {
-                    t.innerText = '✓ Simulación de Plano (83m²) Cargada';
+                    t.innerText = '✓ Simulación de Ejercicio 3 (70.25m²) Cargada';
                     t.classList.remove('hidden'); 
                     setTimeout(() => { t.classList.add('hidden'); }, 3000);
                 }
@@ -1974,6 +2016,10 @@
                 document.getElementById('simp-zone').value = "B";
                 document.getElementById('simp-sun').value = "sol";
                 document.getElementById('simp-walls').value = "pocas";
+
+                // Revertir temperaturas
+                document.getElementById('i-ext-t').value = 2;
+                document.getElementById('i-int-t').value = 21;
 
                 clearTbodies('verano');
                 clearTbodies('invierno');
