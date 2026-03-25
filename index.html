@@ -31,17 +31,27 @@
         :root {
             --bg-app: #f1f5f9;
             --bg-surface: #ffffff;
+            --bg-glass: rgba(255, 255, 255, 0.85);
+            --bg-alt: rgba(0, 0, 0, 0.05);
+            --bg-hover: rgba(0, 0, 0, 0.08);
             --text-primary: #0f172a;
+            --text-muted: #475569;
             --border-default: rgba(0, 0, 0, 0.1);
             --accent-base: #f59e0b;
+            --accent-ghost: rgba(245, 158, 11, 0.15);
         }
 
         .dark {
-            --bg-app: #0f172a;
-            --bg-surface: #1e293b;
-            --text-primary: #f8fafc;
+            --bg-app: #0a0a0c;
+            --bg-surface: #1a1a1c;
+            --bg-glass: rgba(15, 23, 42, 0.85);
+            --bg-alt: rgba(0, 0, 0, 0.3);
+            --bg-hover: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-muted: #cbd5e1;
             --border-default: rgba(255, 255, 255, 0.1);
             --accent-base: #fbbf24;
+            --accent-ghost: rgba(251, 191, 36, 0.15);
         }
 
         body { 
@@ -53,25 +63,30 @@
         .technical-font { font-family: 'Roboto Condensed', sans-serif; }
 
         .glass-card {
-            background: var(--bg-surface);
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--border-default);
-            border-radius: 16px;
-            box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
         }
 
         input[type="number"], input[type="text"], select {
-            background: var(--bg-app);
+            background: var(--bg-surface);
             border: 1px solid var(--border-default);
             color: var(--text-primary);
             border-radius: 6px;
-            padding: 6px 10px;
+            padding: 8px 12px;
             font-size: 13px;
             width: 100%;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.1s ease;
         }
 
-        input:focus, select:focus { border-color: var(--accent-base); }
+        input:focus, select:focus { 
+            border-color: var(--accent-base);
+            box-shadow: 0 0 0 3px var(--accent-ghost);
+        }
         
         input:disabled, input[readonly] {
             opacity: 0.6;
@@ -87,6 +102,72 @@
             color: #64748b;
             margin-bottom: 4px;
             display: block;
+        }
+
+        .tabs-container {
+            background: var(--bg-alt);
+            border-radius: 8px;
+            border: 1px solid var(--border-default);
+            padding: 4px;
+        }
+
+        .view-toggle-btn {
+            padding: 6px 12px;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-muted);
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        .view-toggle-btn:hover {
+            color: var(--text-primary);
+        }
+        .view-toggle-btn.active {
+            background-color: var(--accent-base);
+            color: #000000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-primary {
+            background: var(--accent-base);
+            color: #000000;
+            border-radius: 6px;
+            font-weight: 800;
+            padding: 10px 12px;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            background: #d97706;
+            transform: translateY(-1px);
+            border-color: rgba(0, 0, 0, 0.4);
+        }
+        .dark .btn-primary:hover {
+            background: #f59e0b;
+        }
+        .btn-primary:active {
+            transform: scale(0.97);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: #ffffff;
+            border-radius: 6px;
+            font-weight: 800;
+            padding: 10px 12px;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
         }
 
         .tab-btn {
@@ -206,15 +287,15 @@
         
         <!-- Toggle Superior de Metodología de Cálculo -->
         <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8 no-print">
-            <div class="bg-gray-200 dark:bg-slate-800 p-1 rounded-xl inline-flex shadow-inner">
-                <button onclick="switchThermalMethod('detailed')" id="btn-method-detailed" class="view-toggle-btn active px-6 py-2 rounded-lg text-sm font-bold text-gray-700 dark:text-slate-300">
+            <div class="tabs-container inline-flex shadow-inner">
+                <button onclick="switchThermalMethod('detailed')" id="btn-method-detailed" class="view-toggle-btn active">
                     📊 Cálculo Detallado (Normativo CTE/RITE)
                 </button>
-                <button onclick="switchThermalMethod('simplified')" id="btn-method-simplified" class="view-toggle-btn px-6 py-2 rounded-lg text-sm font-bold text-gray-700 dark:text-slate-300">
+                <button onclick="switchThermalMethod('simplified')" id="btn-method-simplified" class="view-toggle-btn">
                     ⚡ Cálculo Simplificado (Método Alpino Clima)
                 </button>
             </div>
-            <button id="btn-simulate" onclick="loadSimulationPlan()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2">
+            <button id="btn-simulate" onclick="loadSimulationPlan()" class="btn-primary flex items-center gap-2">
                 🏠 Simular Plano
             </button>
         </div>
@@ -284,9 +365,12 @@
                             </div>
                         </div>
 
-                        <!-- Info Ecuación -->
-                        <div class="mt-6 bg-blue-100/50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-xl text-xs text-gray-600 dark:text-slate-400 font-mono">
-                            <span class="font-bold text-blue-600 dark:text-blue-400">Ecuación Base:</span> Q = Superficie(m²) × Carga Base(W/m²) × F1(Zona) × F2(Sombra) × F3(Paredes) × 1.1(Margen de Seguridad)
+                        <!-- Info Ecuación Dinámica -->
+                        <div class="mt-6 bg-blue-100/50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-xl text-xs text-gray-600 dark:text-slate-400 font-mono relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-2 opacity-10 pointer-events-none"><span class="text-2xl">🧮</span></div>
+                            <span class="font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest text-[10px] block mb-2">Desarrollo del Cálculo Dinámico</span>
+                            <div id="simp-dynamic-formula-h" class="text-orange-600 dark:text-orange-400 mb-1">Q_calefacción = Área × Base × F1 × F2 × F3 × 1.1</div>
+                            <div id="simp-dynamic-formula-c" class="text-blue-600 dark:text-blue-400">Q_refrigeración = Área × Base × F1 × F2 × F3 × 1.1</div>
                         </div>
                     </div>
 
@@ -298,7 +382,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-32 w-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.25a.75.75 0 01.75.75v3.13l1.83-1.83a.75.75 0 111.06 1.06L13.12 7.88A.75.75 0 0112 8.25a.75.75 0 01-1.12-.22L8.36 5.51a.75.75 0 011.06-1.06l1.83 1.83V3a.75.75 0 01.75-.75z"/></svg>
                             </div>
                             <h4 class="text-blue-600 dark:text-blue-400 font-black uppercase text-xs mb-2 tracking-widest relative z-10">Potencia de Calefacción</h4>
-                            <p class="text-[10px] text-gray-500 dark:text-slate-500 mb-4 relative z-10">Cálculo estimado + 10% margen caldera.</p>
+                            <p class="text-[10px] text-gray-500 dark:text-slate-500 mb-4 relative z-10">Cálculo estimado + 10% factor seguridad.</p>
                             
                             <div class="relative z-10">
                                 <div id="simp-res-heat-w" class="text-4xl font-black font-mono text-gray-800 dark:text-white tracking-tighter">0 <span class="text-sm font-normal text-gray-500 dark:text-slate-400">W</span></div>
@@ -312,7 +396,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-32 w-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z"/></svg>
                             </div>
                             <h4 class="text-orange-600 dark:text-orange-500 font-black uppercase text-xs mb-2 tracking-widest relative z-10">Potencia de Refrigeración</h4>
-                            <p class="text-[10px] text-gray-500 dark:text-slate-500 mb-4 relative z-10">Cálculo estimado + 10% margen equipo.</p>
+                            <p class="text-[10px] text-gray-500 dark:text-slate-500 mb-4 relative z-10">Cálculo estimado + 10% factor seguridad.</p>
                             
                             <div class="relative z-10">
                                 <div id="simp-res-cool-w" class="text-4xl font-black font-mono text-gray-800 dark:text-white tracking-tighter">0 <span class="text-sm font-normal text-gray-500 dark:text-slate-400">W</span></div>
@@ -382,6 +466,33 @@
                         <p class="text-[10px] text-emerald-400 uppercase font-bold mb-2 pr-6">Eficiencia (SCOP / SPF)</p>
                         <div class="font-mono text-sm text-emerald-300 mb-3 bg-slate-950 p-2.5 rounded text-center shadow-inner border border-emerald-900/50 tracking-tighter">SCOP = Q_térmico / W_eléctrico</div>
                         <p class="text-[9px] text-slate-500 leading-relaxed">Rendimiento estacional. <strong class="text-emerald-400">A mayor SCOP, mayor ahorro</strong>.</p>
+                    </div>
+                    
+                    <!-- NUEVO: Masterclasses Formatec -->
+                    <div class="md:col-span-2 lg:col-span-4 bg-slate-900/80 p-5 rounded-xl border border-indigo-500/30 flex flex-col gap-4 mt-2 shadow-inner">
+                        <div>
+                            <p class="text-[10px] text-indigo-400 uppercase font-bold mb-1">Criterio Experto y Formación (Formatec / Javier Ponce)</p>
+                            <p class="text-[10px] text-slate-400 leading-relaxed mb-3">
+                                Según la doctrina técnica experta, se aplica un <strong>factor de mayoración del 10% al 20%</strong> sobre la carga total calculada para seleccionar el equipo final seguro. En calefacción (invierno), las <strong>ganancias internas (ocupantes, iluminación) se desprecian</strong> y no se restan a la demanda, actuando como margen de seguridad.
+                            </p>
+                            <p class="text-[10px] text-slate-400 leading-relaxed">
+                                👇 <strong>Estos vídeos son oro puro.</strong> Aprende los fundamentos del cálculo paso a paso con estas masterclasses, esenciales para comprender el origen de cada coeficiente empleado en la aplicación.
+                            </p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="rounded-lg overflow-hidden border border-slate-700 shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                                <div class="bg-indigo-600/80 text-white text-[9px] font-bold uppercase tracking-widest p-1.5 text-center">📺 Masterclass: Cargas de Verano</div>
+                                <div class="aspect-video">
+                                    <iframe class="w-full h-full" src="https://www.youtube.com/embed/v5yHLzuYm20" title="Cargas de Verano" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                </div>
+                            </div>
+                            <div class="rounded-lg overflow-hidden border border-slate-700 shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                                <div class="bg-blue-600/80 text-white text-[9px] font-bold uppercase tracking-widest p-1.5 text-center">📺 Masterclass: Cargas de Invierno</div>
+                                <div class="aspect-video">
+                                    <iframe class="w-full h-full" src="https://www.youtube.com/embed/18HBExuZNjA" title="Cargas de Invierno" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -551,7 +662,7 @@
                 <!-- TAB: VERANO -->
                 <div id="tab-verano" class="tab-content block">
                     <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4 bg-orange-50 dark:bg-orange-900/10">
-                        <p class="text-xs text-orange-600 dark:text-orange-400 font-semibold">Desglose normativo de componentes. Se diferencia Carga Sensible de Carga Latente.</p>
+                        <p class="text-xs text-orange-600 dark:text-orange-400 font-semibold">Desglose normativo de componentes. Se diferencia Carga Sensible de Carga Latente. <span class="font-bold text-indigo-500 dark:text-indigo-400" title="Criterio UPV: En verano se suman cargas externas e internas para abatir la totalidad de ganancias de energía de la sala.">(Nota UPV: Sumar cargas externas + internas).</span></p>
                         <div class="flex gap-2 no-print shrink-0 items-center">
                             <button onclick="confirmReset('verano')" class="text-[10px] font-bold uppercase px-3 py-2 bg-red-500/10 text-red-500 rounded hover:bg-red-500 hover:text-white transition-all border border-red-200 dark:border-red-900/50">Vaciar Tabla</button>
                         </div>
@@ -679,7 +790,7 @@
                 <!-- TAB: INVIERNO -->
                 <div id="tab-invierno" class="tab-content hidden">
                     <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4 bg-blue-50 dark:bg-blue-900/10">
-                        <p class="text-xs text-blue-600 dark:text-blue-400 font-semibold">Cálculo de pérdidas térmicas. Soporta espacios no calefactados con ΔT manual.</p>
+                        <p class="text-xs text-blue-600 dark:text-blue-400 font-semibold">Cálculo de pérdidas térmicas. <span class="font-bold text-indigo-500 dark:text-indigo-400" title="Criterio UPV: Las ganancias internas no se suman en invierno porque actúan a favor de la calefacción, sirviendo de margen de seguridad.">(Nota UPV: Las cargas interiores se desprecian por seguridad).</span></p>
                         <div class="flex gap-2 no-print shrink-0 items-center">
                             <button onclick="confirmReset('invierno')" class="text-[10px] font-bold uppercase px-3 py-2 bg-red-500/10 text-red-500 rounded hover:bg-red-500 hover:text-white transition-all border border-red-200 dark:border-red-900/50">Vaciar Tabla</button>
                         </div>
@@ -796,6 +907,11 @@
                         </div>
                     </div>
 
+                    <div class="mb-3 bg-slate-900/5 dark:bg-slate-900/50 p-2 rounded border border-slate-200 dark:border-slate-700 relative z-10 shadow-inner">
+                        <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Ecuación Total (W)</p>
+                        <code id="res-v-formula" class="text-[11px] font-mono font-bold text-orange-600 dark:text-orange-400">Q_tot = Q_sensible + Q_latente</code>
+                    </div>
+
                     <div class="flex justify-between items-end border-t border-slate-200 dark:border-slate-700 pt-4 relative z-10">
                         <div>
                             <p class="text-[10px] text-slate-500 uppercase mb-1">Carga Total de Refrigeración</p>
@@ -829,6 +945,11 @@
                         </div>
                     </div>
 
+                    <div class="mb-3 bg-slate-900/5 dark:bg-slate-900/50 p-2 rounded border border-slate-200 dark:border-slate-700 relative z-10 shadow-inner">
+                        <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Ecuación Total (W)</p>
+                        <code id="res-i-formula" class="text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400">Q_tot = Q_transmisión + Q_ventilación</code>
+                    </div>
+
                     <div class="flex justify-between items-end border-t border-slate-200 dark:border-slate-700 pt-4 relative z-10">
                         <div>
                             <p class="text-[10px] text-slate-500 uppercase mb-1">Carga Total de Calefacción</p>
@@ -851,16 +972,35 @@
                         <span class="text-2xl">⚖️</span>
                     </div>
                     <div>
-                        <h3 class="text-indigo-700 dark:text-indigo-400 font-bold text-sm uppercase tracking-widest mb-2">Nota: Cálculo Estricto vs. Potencia Instalada (Márgenes Comerciales)</h3>
+                        <h3 class="text-indigo-700 dark:text-indigo-400 font-bold text-sm uppercase tracking-widest mb-2">Nota: Cálculo Estricto vs. Potencia Instalada (Márgenes y Factor de Seguridad UPV)</h3>
                         <p class="text-xs text-slate-600 dark:text-slate-400 mb-3 leading-relaxed">
-                            Al aplicar la simulación del <strong>Ejercicio 3 (ref: Javier Ponce)</strong>, es vital comprender la diferencia entre la <em>carga térmica teórica calculada</em> y la <em>potencia real instalada</em>. En la práctica, los equipos comerciales imponen un sobredimensionado que actúa como margen de seguridad.
+                            Al aplicar la simulación del <strong>Ejercicio 3 (ref: Javier Ponce)</strong>, es vital comprender la diferencia entre la <em>carga térmica teórica calculada</em> y la <em>potencia real instalada</em>. Puedes ajustar los factores de seguridad y potencias comerciales a continuación:
                         </p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                        
+                        <!-- PARÁMETROS DE SEGURIDAD AJUSTABLES -->
+                        <div class="flex flex-wrap gap-4 mb-4 p-3 bg-white dark:bg-slate-900 rounded-lg border border-indigo-100 dark:border-indigo-900/50 shadow-inner">
+                            <div class="flex flex-col gap-1">
+                                <label class="text-[9px] font-black uppercase text-indigo-500 tracking-wider">Factor de Seguridad (%)</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" id="input-safety-factor" value="15" step="1" oninput="triggerCalculate()" class="w-16 h-8 text-center text-xs font-bold border-indigo-200 dark:border-indigo-900">
+                                    <span class="text-xs text-slate-500">%</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label class="text-[9px] font-black uppercase text-indigo-500 tracking-wider">Potencia Radiador (W/elem)</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" id="input-radiator-w" value="115" step="5" oninput="triggerCalculate()" class="w-20 h-8 text-center text-xs font-bold border-indigo-200 dark:border-indigo-900">
+                                    <span class="text-xs text-slate-500">W</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
                                 <h4 class="text-[10px] font-black uppercase text-slate-500 mb-2 border-b border-slate-100 dark:border-slate-700 pb-1">Cálculo Estricto (Teórico)</h4>
                                 <p class="text-[11px] text-slate-500 mb-2">Demanda térmica pura según las pérdidas por transmisión y ventilación.</p>
                                 <ul class="text-[10px] text-slate-500 list-disc pl-4 space-y-1">
-                                    <li>En la simulación: <span class="font-mono font-bold text-slate-700 dark:text-slate-300">~ 7.427 W</span> (100%).</li>
+                                    <li>En el cálculo actual: <span id="nota-estricto-w" class="font-mono font-bold text-slate-700 dark:text-slate-300">~ 0 W</span> (100%).</li>
                                     <li>Asume condiciones ideales normativas.</li>
                                     <li>No contempla pérdidas de distribución en tuberías.</li>
                                 </ul>
@@ -870,9 +1010,9 @@
                                 <h4 class="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 mb-2 border-b border-indigo-50 dark:border-indigo-900/50 pb-1">Potencia Instalada (Real)</h4>
                                 <p class="text-[11px] text-slate-500 mb-2">Capacidad efectiva de los radiadores instalados tras seleccionar el nº de elementos.</p>
                                 <ul class="text-[10px] text-slate-500 list-disc pl-4 space-y-1">
-                                    <li>En la simulación: <span class="font-mono font-bold text-indigo-600 dark:text-indigo-400">~ 9.820 W</span> con 86 elementos de radiador.</li>
+                                    <li>En la instalación: <span id="nota-real-w" class="font-mono font-bold text-indigo-600 dark:text-indigo-400">~ 0 W</span> <span id="nota-real-elem">con 0 elementos de radiador</span>.</li>
                                     <li>Redondeo al número entero superior de emisores.</li>
-                                    <li>Genera un <strong>sobredimensionado habitual del 15% al 30%</strong> (margen de seguridad implícito).</li>
+                                    <li>Sobredimensionado ajustado manualmente para margen de seguridad.</li>
                                 </ul>
                             </div>
                         </div>
@@ -892,9 +1032,9 @@
                     </button>
                 </div>
                 <div id="dim-caudal-content" class="transition-all duration-300">
-                    <div class="mb-4 bg-slate-100 dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-2">
-                        <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Fórmula Aplicada:</span>
-                        <code class="text-sm font-mono text-blue-600 dark:text-blue-400 font-bold bg-white dark:bg-slate-900 px-3 py-1 rounded border border-blue-200 dark:border-blue-900 shadow-sm">V (m³/h) = Qs (W) / [0.34 · ΔT (K)]</code>
+                    <div class="mb-4 bg-slate-100 dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-2 shadow-inner">
+                        <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Desarrollo Ecuación:</span>
+                        <code id="dim-caudal-formula" class="text-sm font-mono text-blue-600 dark:text-blue-400 font-bold bg-white dark:bg-slate-900 px-3 py-1 rounded border border-blue-200 dark:border-blue-900 shadow-sm">V = Qs / [0.34 · ΔT]</code>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
                         <div>
@@ -959,7 +1099,10 @@
                             <div class="text-xl font-black text-emerald-900 dark:text-white font-mono tracking-tighter relative z-10 leading-none" id="ren-w">0 <span class="text-xs font-normal text-emerald-700 dark:text-emerald-200">W</span></div>
                         </div>
                     </div>
-                    <p class="text-[9px] text-gray-500 dark:text-slate-500 mt-4 font-mono italic">* Ecuación Directiva Europea (Decisión 2013/114/UE) / CTE DB-HE4: E_res = Q_usable · (1 - 1/SPF). Solo se considera energía renovable (Aerotermia) si SPF > 2.5</p>
+                    <div class="mt-4 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800 p-3 rounded-lg shadow-inner">
+                        <p class="text-[9px] text-gray-500 dark:text-slate-400 font-mono italic mb-2">* CTE DB-HE4 (Directiva 2013/114/UE): E_res = Q_usable · (1 - 1/SPF). Solo renovable si SPF > 2.5</p>
+                        <code id="renovable-formula" class="block text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold">E_res = Q_usable · (1 - 1/SPF)</code>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1003,8 +1146,22 @@
             <div class="space-y-3 mb-4 max-h-[40vh] overflow-y-auto pr-2" id="u-calc-layers">
                 <!-- Layers go here -->
             </div>
-            <button onclick="addULayer()" class="w-full py-2 border border-dashed border-gray-300 dark:border-slate-600 rounded-lg text-xs font-bold text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors mb-4">+ Añadir Capa de Material</button>
+            <button onclick="addULayer()" class="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 hover:border-amber-500/50 hover:bg-amber-50 dark:hover:bg-amber-500/5 transition-all mb-4 group shadow-sm">
+                <span class="inline-block transform group-hover:scale-125 transition-transform mr-1">+</span> Añadir Capa de Material
+            </button>
             
+            <!-- Ecuaciones Dinámicas -->
+            <div class="mb-4 bg-slate-900 rounded-xl p-4 border border-slate-700 shadow-inner overflow-x-auto relative">
+                <div class="absolute top-0 right-0 p-2 opacity-10 pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                </div>
+                <div class="text-slate-400 mb-2 text-[9px] uppercase tracking-widest font-bold">Desarrollo del Cálculo (CTE DB-HE DA)</div>
+                <div class="font-mono text-xs tracking-tight">
+                    <div id="u-calc-formula-rt" class="text-emerald-400 whitespace-nowrap mb-1.5 pb-1.5 border-b border-slate-800">R_T = R_si + R_se = 0.170 m²K/W</div>
+                    <div id="u-calc-formula-u" class="text-amber-400 whitespace-nowrap font-bold">U = 1 / R_T = 5.882 W/m²K</div>
+                </div>
+            </div>
+
             <div class="flex justify-between items-center bg-gray-50 dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 mb-4">
                 <div>
                     <span class="block text-[10px] uppercase font-bold text-slate-500">Resistencia Térmica (R)</span>
@@ -1460,9 +1617,6 @@
                 latCell.innerText = '-';
             }
             
-            const orientSelect = tr.querySelector('.row-orient');
-            if (orientSelect) updateOrientationV(orientSelect, false);
-            
             if(recalc) {
                 triggerCalculate();
             }
@@ -1646,7 +1800,14 @@
             const qCooling = area * baseCooling * f1_c * f2_c * f3_c;
             const qCoolingTotal = qCooling * 1.10;
 
-            // 4. Actualizar Interfaz Simplificada
+            // 4. Actualizar Interfaz Simplificada (Incluyendo ecuaciones dinámicas)
+            if(document.getElementById('simp-dynamic-formula-h')) {
+                document.getElementById('simp-dynamic-formula-h').innerHTML = `Q_cal = ${area}m² × ${baseHeating}W/m² × ${f1_h.toFixed(2)} × ${f2_h.toFixed(2)} × ${f3_h.toFixed(2)} × 1.1 = <strong>${Math.round(qHeatingTotal)} W</strong>`;
+            }
+            if(document.getElementById('simp-dynamic-formula-c')) {
+                document.getElementById('simp-dynamic-formula-c').innerHTML = `Q_ref = ${area}m² × ${baseCooling}W/m² × ${f1_c.toFixed(2)} × ${f2_c.toFixed(2)} × ${f3_c.toFixed(2)} × 1.1 = <strong>${Math.round(qCoolingTotal)} W</strong>`;
+            }
+
             if(document.getElementById('simp-res-heat-w')) {
                 document.getElementById('simp-res-heat-w').innerHTML = Math.round(qHeatingTotal) + ' <span class="text-sm font-normal text-gray-500 dark:text-slate-400">W</span>';
                 document.getElementById('simp-res-heat-kcal').innerText = Math.round(qHeatingTotal * 0.86) + ' kcal/h';
@@ -1761,6 +1922,10 @@
             const fcs = totalVerano > 0 ? (sumVSens / totalVerano).toFixed(2) : "0.00";
             document.getElementById('res-v-fcs').innerText = 'FCS: ' + fcs;
 
+            if(document.getElementById('res-v-formula')) {
+                document.getElementById('res-v-formula').innerHTML = `Q_tot = ${Math.round(sumVSens)} W + ${Math.round(sumVLat)} W = <strong class="text-orange-500">${Math.round(totalVerano)} W</strong>`;
+            }
+
             // 5. Actualizar Interfaz (Invierno)
             document.getElementById('tot-i-sens').innerText = Math.round(sumISens) + ' W';
             document.getElementById('res-i-trans-w').innerText = Math.round(sumITrans) + ' W';
@@ -1768,6 +1933,29 @@
             
             document.getElementById('res-i-total-kw').innerHTML = (sumISens/1000).toFixed(2) + ' <span class="text-sm font-normal text-slate-500">kW</span>';
             document.getElementById('res-i-kcal').innerText = Math.round(sumISens * 0.86) + ' kcal/h';
+
+            if(document.getElementById('res-i-formula')) {
+                document.getElementById('res-i-formula').innerHTML = `Q_tot = ${Math.round(sumITrans)} W + ${Math.round(sumIVent)} W = <strong class="text-blue-500">${Math.round(sumISens)} W</strong>`;
+            }
+
+            // ACTUALIZACIÓN DE FACTORES DE SEGURIDAD Y RADIADORES (DINÁMICO SEGÚN USUARIO)
+            const estricto = Math.round(sumISens);
+            const safetyPct = parseFloat(document.getElementById('input-safety-factor').value) || 0;
+            const factorSeguridad = 1 + (safetyPct / 100);
+            const wPerElement = parseFloat(document.getElementById('input-radiator-w').value) || 115;
+            
+            const elementos = estricto > 0 ? Math.ceil((estricto * factorSeguridad) / wPerElement) : 0;
+            const potenciaReal = elementos * wPerElement;
+
+            if(document.getElementById('nota-estricto-w')) {
+                document.getElementById('nota-estricto-w').innerText = `~ ${estricto.toLocaleString('es-ES')} W`;
+            }
+            if(document.getElementById('nota-real-w')) {
+                document.getElementById('nota-real-w').innerText = `~ ${potenciaReal.toLocaleString('es-ES')} W`;
+            }
+            if(document.getElementById('nota-real-elem')) {
+                document.getElementById('nota-real-elem').innerText = `con ${elementos} elementos de radiador`;
+            }
 
             calculateAirflow();
             calculateRenewable();
@@ -1803,7 +1991,10 @@
                     simpAge: document.getElementById('simp-age').value,
                     simpZone: document.getElementById('simp-zone').value,
                     simpSun: document.getElementById('simp-sun').value,
-                    simpWalls: document.getElementById('simp-walls').value
+                    simpWalls: document.getElementById('simp-walls').value,
+                    // Nuevos parámetros persistentes
+                    safetyFactor: document.getElementById('input-safety-factor').value,
+                    radiatorW: document.getElementById('input-radiator-w').value
                 },
                 verano: [],
                 invierno: []
@@ -1860,6 +2051,10 @@
                 if(data.config.simpZone) document.getElementById('simp-zone').value = data.config.simpZone;
                 if(data.config.simpSun) document.getElementById('simp-sun').value = data.config.simpSun;
                 if(data.config.simpWalls) document.getElementById('simp-walls').value = data.config.simpWalls;
+
+                // Cargar parámetros de seguridad si existen
+                if(data.config.safetyFactor) document.getElementById('input-safety-factor').value = data.config.safetyFactor;
+                if(data.config.radiatorW) document.getElementById('input-radiator-w').value = data.config.radiatorW;
             }
 
             // Cargar Verano
@@ -2002,9 +2197,7 @@
                 isSimulationLoaded = true;
                 if(btn) {
                     btn.innerHTML = '🔄 Quitar Simulación';
-                    btn.classList.replace('bg-indigo-600', 'bg-red-600');
-                    btn.classList.replace('hover:bg-indigo-500', 'hover:bg-red-500');
-                    btn.classList.replace('shadow-indigo-600/20', 'shadow-red-600/20');
+                    btn.classList.replace('btn-primary', 'btn-danger');
                 }
                 
                 if(t) {
@@ -2032,9 +2225,7 @@
                 isSimulationLoaded = false;
                 if(btn) {
                     btn.innerHTML = '🏠 Simular Plano';
-                    btn.classList.replace('bg-red-600', 'bg-indigo-600');
-                    btn.classList.replace('hover:bg-red-500', 'hover:bg-indigo-500');
-                    btn.classList.replace('shadow-red-600/20', 'shadow-indigo-600/20');
+                    btn.classList.replace('btn-danger', 'btn-primary');
                 }
 
                 if(t) {
@@ -2144,6 +2335,10 @@
             if (dt > 0 && qs > 0) caudal = qs / (0.34 * dt);
             
             if(document.getElementById('dim-caudal')) document.getElementById('dim-caudal').innerHTML = caudal.toFixed(0) + ' <span class="text-xs font-normal text-blue-700 dark:text-blue-200">m³/h</span>';
+
+            if(document.getElementById('dim-caudal-formula')) {
+                document.getElementById('dim-caudal-formula').innerHTML = `V = ${qs.toFixed(0)} / [0.34 · ${dt.toFixed(1)}] = <strong>${caudal.toFixed(0)} m³/h</strong>`;
+            }
         }
 
         function calculateRenewable() {
@@ -2166,11 +2361,19 @@
                 spfAlert.innerText = '✓ Válido Renovable CTE DB-HE4 (SPF > 2.5)';
                 pct = (1 - (1 / spf)) * 100;
                 eRes = qInvierno * (1 - (1 / spf));
+                
+                if(document.getElementById('renovable-formula')) {
+                    document.getElementById('renovable-formula').innerHTML = `E_res = ${qInvierno.toFixed(0)}W · (1 - 1/${spf.toFixed(2)}) = <strong>${eRes.toFixed(0)} W</strong>`;
+                }
             } else {
                 spfInput.classList.add('border-red-500', 'text-red-400', 'bg-red-950/30');
                 spfAlert.innerText = '❌ No computa CTE DB-HE4 (SPF ≤ 2.5)';
                 pct = 0;
                 eRes = 0;
+                
+                if(document.getElementById('renovable-formula')) {
+                    document.getElementById('renovable-formula').innerHTML = `E_res = 0 W <span class="text-slate-500 font-normal">(Rendimiento SPF insuficiente)</span>`;
+                }
             }
 
             if(document.getElementById('ren-pct')) document.getElementById('ren-pct').innerText = pct.toFixed(1) + ' %';
@@ -2339,13 +2542,15 @@
 
         function addULayer() {
             const div = document.createElement('div');
-            div.className = "flex flex-col md:flex-row gap-2 items-start md:items-center layer-row w-full bg-slate-50/50 dark:bg-slate-800/30 p-2 rounded-lg border border-slate-100 dark:border-slate-700/50 transition-colors";
+            div.className = "flex flex-col md:flex-row gap-3 items-start md:items-center layer-row w-full bg-white/60 dark:bg-slate-800/40 backdrop-blur-md p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-300 group";
             div.innerHTML = `
-                <div class="u-drag-handle cursor-grab active:cursor-grabbing text-slate-400 hover:text-amber-500 w-full md:w-auto text-center md:text-left flex items-center justify-center shrink-0" title="Arrastrar para reordenar">☰</div>
-                <div class="layer-num font-mono text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full w-5 h-5 flex items-center justify-center mx-auto md:mx-0 shrink-0">#</div>
-                <div class="flex-grow w-full md:w-auto flex flex-col gap-1.5">
-                    <select onchange="if(this.value){ const r = this.closest('.layer-row'); const opt = this.options[this.selectedIndex]; r.querySelector('.mat-name').value = opt.text.split('(')[0].trim(); r.querySelector('.mat-lambda').value = this.value; if(opt.dataset.e) r.querySelector('.mat-esp').value = opt.dataset.e; calculateUModal(); this.value=''; }" class="text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded p-1.5 text-slate-600 dark:text-slate-300 outline-none w-full focus:border-amber-500 cursor-pointer">
-                        <option value="">+ Insertar material común...</option>
+                <div class="u-drag-handle cursor-grab active:cursor-grabbing text-slate-300 dark:text-slate-600 hover:text-amber-500 w-full md:w-auto text-center md:text-left flex items-center justify-center shrink-0 transition-colors" title="Arrastrar para reordenar">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" /></svg>
+                </div>
+                <div class="layer-num font-mono text-[10px] bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-md w-6 h-6 flex items-center justify-center mx-auto md:mx-0 shrink-0 font-bold shadow-inner">#</div>
+                <div class="flex-grow w-full md:w-auto flex flex-col gap-2">
+                    <select onchange="if(this.value){ const r = this.closest('.layer-row'); const opt = this.options[this.selectedIndex]; r.querySelector('.mat-name').value = opt.text.split('(')[0].trim(); r.querySelector('.mat-lambda').value = this.value; if(opt.dataset.e) r.querySelector('.mat-esp').value = opt.dataset.e; calculateUModal(); this.value=''; }" class="text-[11px] bg-white dark:bg-[#1a1a1c] border border-slate-200 dark:border-slate-700 rounded-md p-2 text-slate-700 dark:text-slate-300 outline-none w-full focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 cursor-pointer shadow-sm transition-all font-semibold">
+                        <option value="">+ Seleccionar material predefinido...</option>
                         <option value="0.49">Ladrillo hueco (λ=0.49)</option>
                         <option value="0.87">Ladrillo macizo (λ=0.87)</option>
                         <option value="1.63">Hormigón armado (λ=1.63)</option>
@@ -2356,21 +2561,27 @@
                         <option value="0.035">Lana Mineral (λ=0.035)</option>
                         <option value="0.025">Poliuretano PUR (λ=0.025)</option>
                         <option value="0.25">Placa Yeso Laminado (λ=0.25)</option>
+                        <option value="1.00" data-e="0.004">Vidrio simple (λ=1.00)</option>
+                        <option value="0.20">Policarbonato (λ=0.20)</option>
+                        <option value="0.33" data-e="0.001">Barrera de vapor (Polietileno) (λ=0.33)</option>
+                        <option value="0.17" data-e="0.004">Lámina bituminosa / Impermeabilizante (λ=0.17)</option>
                         <option value="0.067" data-e="0.01">Cámara de aire 1cm (R=0.15)</option>
                         <option value="0.118" data-e="0.02">Cámara de aire 2cm (R=0.17)</option>
                         <option value="0.278" data-e="0.05">Cámara de aire 5cm (R=0.18)</option>
                     </select>
-                    <input type="text" placeholder="Material personalizado..." class="mat-name w-full bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-600 text-xs p-2 rounded outline-none text-slate-800 dark:text-slate-200 focus:border-amber-500 transition-colors" oninput="calculateUModal()">
+                    <input type="text" placeholder="Material personalizado..." class="mat-name w-full bg-white dark:bg-[#1a1a1c] border border-slate-200 dark:border-slate-700 text-xs font-semibold p-2 rounded-md outline-none text-slate-800 dark:text-slate-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all shadow-sm" oninput="calculateUModal()">
                 </div>
                 <div class="w-full md:w-20 flex flex-row md:flex-col items-center md:items-stretch gap-2 md:gap-1">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase w-24 md:hidden">Espesor (m)</span>
-                    <input type="number" placeholder="e (m)" step="0.01" value="0.10" class="mat-esp w-full bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-600 text-xs p-2 rounded outline-none text-center text-slate-800 dark:text-slate-200 focus:border-amber-500 transition-colors" oninput="calculateUModal()">
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest w-24 md:hidden">Espesor (m)</span>
+                    <input type="number" placeholder="e (m)" step="0.01" value="0.10" class="mat-esp w-full bg-white dark:bg-[#1a1a1c] border border-slate-200 dark:border-slate-700 text-xs p-2 rounded-md outline-none text-center font-mono font-bold text-amber-600 dark:text-amber-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all shadow-sm" oninput="calculateUModal()">
                 </div>
                 <div class="w-full md:w-20 flex flex-row md:flex-col items-center md:items-stretch gap-2 md:gap-1">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase w-24 md:hidden">λ (W/mK)</span>
-                    <input type="number" placeholder="λ" step="0.001" value="0.040" class="mat-lambda w-full bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-600 text-xs p-2 rounded outline-none text-center text-slate-800 dark:text-slate-200 focus:border-amber-500 transition-colors" oninput="calculateUModal()">
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest w-24 md:hidden">λ (W/mK)</span>
+                    <input type="number" placeholder="λ" step="0.001" value="0.040" class="mat-lambda w-full bg-white dark:bg-[#1a1a1c] border border-slate-200 dark:border-slate-700 text-xs p-2 rounded-md outline-none text-center font-mono font-bold text-blue-600 dark:text-blue-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all shadow-sm" oninput="calculateUModal()">
                 </div>
-                <button onclick="this.closest('.layer-row').remove(); calculateUModal()" class="text-red-400 hover:bg-red-500 hover:text-white rounded-lg font-bold p-2 md:mt-7 transition-colors self-end md:self-auto border border-transparent hover:border-red-600 flex items-center justify-center w-8 h-8" title="Eliminar Capa">✕</button>
+                <button onclick="this.closest('.layer-row').remove(); calculateUModal()" class="text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/20 dark:hover:text-red-400 rounded-md p-2 md:mt-7 transition-colors self-end md:self-auto flex items-center justify-center w-8 h-8 opacity-50 group-hover:opacity-100" title="Eliminar Capa">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
             `;
             document.getElementById('u-calc-layers').appendChild(div);
             calculateUModal();
@@ -2383,6 +2594,8 @@
             if (name.includes('aire') || name.includes('cámara') || name.includes('camara')) return '#93c5fd'; // Azul
             if (name.includes('yeso') || name.includes('mortero') || name.includes('hormigón') || name.includes('hormigon') || name.includes('placa') || name.includes('cemento') || name.includes('enfoscado')) return '#94a3b8'; // Gris
             if (name.includes('madera')) return '#d97706'; // Naranja/Madera
+            if (name.includes('vidrio') || name.includes('policarbonato')) return '#67e8f9'; // Cyan/Vidrio
+            if (name.includes('barrera') || name.includes('vapor') || name.includes('bituminosa') || name.includes('impermeabilizante')) return '#334155'; // Gris Oscuro
             return '#cbd5e1'; // Gris claro por defecto (otros)
         }
 
@@ -2395,6 +2608,8 @@
             let totalEspesor = 0;
             let layersData = [];
             let layerIndex = 1;
+            
+            let formulaStr = `R_T = R_s(${surfRes.toFixed(2)})`;
 
             document.querySelectorAll('#u-calc-layers .layer-row').forEach(row => {
                 const numSpan = row.querySelector('.layer-num');
@@ -2405,7 +2620,13 @@
                 const e = parseFloat(inputs[0].value) || 0;
                 const l = parseFloat(inputs[1].value) || 1;
                 
-                if(l > 0) rTotal += (e / l);
+                if(l > 0) {
+                    const rLayer = (e / l);
+                    rTotal += rLayer;
+                    if(e > 0) {
+                        formulaStr += ` + R_${layerIndex-1}(${rLayer.toFixed(3)})`;
+                    }
+                }
                 if(e > 0) {
                     totalEspesor += e;
                     layersData.push({ name: matName, e: e });
@@ -2415,6 +2636,13 @@
             document.getElementById('u-calc-r').innerText = rTotal.toFixed(3) + ' m²K/W';
             const u = rTotal > 0 ? (1 / rTotal) : 0;
             document.getElementById('u-calc-res').innerText = u.toFixed(3);
+
+            // Actualizar panel de ecuaciones
+            const formulaRtEl = document.getElementById('u-calc-formula-rt');
+            if(formulaRtEl) formulaRtEl.innerText = `${formulaStr} = ${rTotal.toFixed(3)} m²K/W`;
+            
+            const formulaUEl = document.getElementById('u-calc-formula-u');
+            if(formulaUEl) formulaUEl.innerText = `U = 1 / R_T = 1 / ${rTotal.toFixed(3)} = ${u.toFixed(3)} W/m²K`;
 
             // Renderizar gráfico visual de espesores
             const visualContainer = document.getElementById('u-calc-visual');
