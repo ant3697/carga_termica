@@ -1111,7 +1111,7 @@
 
     <!-- Modal Calculadora U -->
     <div id="modal-u-calc" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[200] hidden flex items-center justify-center transition-opacity duration-300">
-        <div class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-6 rounded-2xl shadow-2xl max-w-lg w-full m-4">
+        <div class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 p-6 rounded-2xl shadow-2xl max-w-2xl w-full m-4">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
@@ -1138,8 +1138,9 @@
             <!-- Encabezados de Tabla Añadidos -->
             <div class="hidden md:flex gap-2 items-center px-1 mb-2 border-b border-slate-200 dark:border-slate-700 pb-2">
                 <div class="flex-grow text-[10px] font-bold text-slate-500 uppercase tracking-widest">Capa Constructiva / Material</div>
-                <div class="w-20 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center" title="Espesor de la capa en metros">Espesor (m)</div>
-                <div class="w-20 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center" title="Conductividad Térmica (Lambda)">λ (W/mK)</div>
+                <div class="w-24 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center" title="Espesor de la capa en metros">Espesor (m)</div>
+                <div class="w-24 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center" title="Conductividad Térmica (Lambda)">λ (W/mK)</div>
+                <div class="w-24 text-[10px] font-bold text-emerald-500 uppercase tracking-widest text-center" title="Resistencia Térmica Individual">R (m²K/W)</div>
                 <div class="w-8"></div>
             </div>
 
@@ -2571,11 +2572,11 @@
                     </select>
                     <input type="text" placeholder="Material personalizado..." class="mat-name w-full bg-white dark:bg-[#1a1a1c] border border-slate-200 dark:border-slate-700 text-xs font-semibold p-2 rounded-md outline-none text-slate-800 dark:text-slate-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all shadow-sm" oninput="calculateUModal()">
                 </div>
-                <div class="w-full md:w-20 flex flex-row md:flex-col items-center md:items-stretch gap-2 md:gap-1">
+                <div class="w-full md:w-28 flex flex-row md:flex-col items-center md:items-stretch gap-2 md:gap-1">
                     <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest w-24 md:hidden">Espesor (m)</span>
                     <input type="number" placeholder="e (m)" step="0.01" value="0.10" class="mat-esp w-full bg-white dark:bg-[#1a1a1c] border border-slate-200 dark:border-slate-700 text-xs p-2 rounded-md outline-none text-center font-mono font-bold text-amber-600 dark:text-amber-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all shadow-sm" oninput="calculateUModal()">
                 </div>
-                <div class="w-full md:w-20 flex flex-row md:flex-col items-center md:items-stretch gap-2 md:gap-1">
+                <div class="w-full md:w-28 flex flex-row md:flex-col items-center md:items-stretch gap-2 md:gap-1">
                     <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest w-24 md:hidden">λ (W/mK)</span>
                     <input type="number" placeholder="λ" step="0.001" value="0.040" class="mat-lambda w-full bg-white dark:bg-[#1a1a1c] border border-slate-200 dark:border-slate-700 text-xs p-2 rounded-md outline-none text-center font-mono font-bold text-blue-600 dark:text-blue-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all shadow-sm" oninput="calculateUModal()">
                 </div>
