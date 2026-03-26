@@ -442,10 +442,11 @@
             <!-- CONTENIDO DE LA ESTANCIA (Colapsado por defecto con clase 'hidden') -->
             <div class="room-content hidden p-6 pt-4 border-t border-[var(--border-default)]">
 
-                <!-- ▼ CARGAS TÉRMICAS EXTERIORES ▼ -->
-                <div class="text-[10px] font-bold text-[var(--accent-base)] text-center uppercase tracking-widest mb-3 flex items-center justify-center gap-2">
+                <!-- ▼ BOTÓN MAESTRO CARGAS TÉRMICAS ▼ -->
+                <div class="text-[10px] font-bold text-[var(--accent-base)] text-center uppercase tracking-widest mb-3 flex items-center justify-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onclick="const rc = this.closest('.room-content'); rc.querySelectorAll('.param-panel').forEach(p => p.classList.toggle('hidden')); this.querySelector('.main-chevron').classList.toggle('-rotate-90');">
                     <span class="w-8 h-px bg-[var(--accent-base)] opacity-50"></span>
-                    ▼ Cargas Térmicas Exteriores ▼
+                    <svg class="w-4 h-4 main-chevron -rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    PARÁMETROS DE CARGA TÉRMICA
                     <span class="w-8 h-px bg-[var(--accent-base)] opacity-50"></span>
                 </div>
                 
@@ -453,14 +454,13 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
                     <!-- 1 y 2. TRANSMISIÓN OPACOS Y SEMITRANSPARENTES -->
                     <div class="border border-[var(--border-default)] rounded-md bg-[var(--bg-surface)] overflow-hidden flex flex-col h-full">
-                        <div class="px-4 py-2.5 bg-[var(--bg-alt)] border-b border-[var(--border-subtle)] flex items-center justify-between gap-2 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('-rotate-90')">
+                        <div class="px-4 py-2.5 bg-[var(--bg-alt)] border-b border-[var(--border-subtle)] flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2 truncate">
-                                <svg class="w-4 h-4 text-[var(--accent-base)] chevron -rotate-90 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                                 <span class="text-[11px] font-bold text-[var(--accent-base)] truncate">1 y 2. TRANSMISIÓN (cte db-he1)</span>
                             </div>
-                            <button onclick="event.stopPropagation(); addParamento(this)" class="text-[10px] font-bold text-[var(--text-primary)] hover:text-[var(--accent-base)] bg-[var(--bg-app)] px-2 py-1 rounded border border-[var(--border-strong)] no-print transition-colors shadow-sm shrink-0">+ Fachada</button>
+                            <button onclick="addParamento(this)" class="text-[10px] font-bold text-[var(--text-primary)] hover:text-[var(--accent-base)] bg-[var(--bg-app)] px-2 py-1 rounded border border-[var(--border-strong)] no-print transition-colors shadow-sm shrink-0">+ Fachada</button>
                         </div>
-                        <div class="p-4 transition-all hidden flex-1 flex flex-col">
+                        <div class="p-4 transition-all hidden flex-1 flex flex-col param-panel">
                             <div class="paramentos-container space-y-3 flex-1">
                                 <div class="paramento-row relative group transition-all pb-3 border-b border-[var(--border-subtle)] last:border-0 last:pb-0">
                                     <button onclick="if(this.closest('.paramentos-container').children.length > 1) { this.closest('.paramento-row').remove(); calculate(); }" class="absolute top-1 right-0 text-[var(--text-muted)] hover:text-[#ef4444] transition-colors opacity-0 group-hover:opacity-100 no-print" title="Eliminar paramento">
@@ -476,11 +476,17 @@
                                             <input type="number" oninput="calculate()" value="0" class="room-glass !p-1.5 text-xs text-center font-mono w-full">
                                         </div>
                                     </div>
-                                    <div class="pr-6">
+                                    <div class="grid grid-cols-2 gap-4 pr-6">
                                         <select onchange="calculate()" class="room-orient font-semibold text-[11px] !p-1.5 w-full text-[var(--text-primary)]">
-                                            <option value="0">Sur / Interior (+0%)</option>
+                                            <option value="0">Sur / Int. (+0%)</option>
                                             <option value="0.10">Norte (+10%)</option>
-                                            <option value="0.05">Este / Oeste (+5%)</option>
+                                            <option value="0.05">E / O (+5%)</option>
+                                        </select>
+                                        <select onchange="calculate()" class="room-glass-type font-semibold text-[11px] !p-1.5 w-full text-[var(--text-primary)]" title="Factor Solar (g) del Vidrio">
+                                            <option value="0.85">Simple (F=0.85)</option>
+                                            <option value="0.75" selected>Doble (F=0.75)</option>
+                                            <option value="0.50">B. Emisivo (F=0.5)</option>
+                                            <option value="0.30">C. Solar (F=0.3)</option>
                                         </select>
                                     </div>
                                 </div>
@@ -500,11 +506,10 @@
                     <div class="flex flex-col gap-4">
                         <!-- 3. VENTILACIÓN E INFILTRACIÓN -->
                         <div class="border border-[var(--border-default)] rounded-md bg-[var(--bg-surface)] overflow-hidden flex flex-col">
-                            <div class="px-4 py-2.5 bg-[var(--bg-alt)] border-b border-[var(--border-subtle)] flex items-center gap-2 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('-rotate-90')">
-                                <svg class="w-4 h-4 text-[var(--accent-base)] chevron -rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            <div class="px-4 py-2.5 bg-[var(--bg-alt)] border-b border-[var(--border-subtle)] flex items-center gap-2">
                                 <span class="text-[11px] font-bold text-[var(--accent-base)]">3. VENTILACIÓN (RITE IDA)</span>
                             </div>
-                            <div class="p-4 transition-all hidden flex-1">
+                            <div class="p-4 transition-all hidden flex-1 param-panel">
                                 <div class="flex flex-col gap-4">
                                     <div>
                                         <label class="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-2" title="Tasas normativas de renovación de aire">Renovación de Aire (v/h):</label>
@@ -527,20 +532,19 @@
                             </div>
                         </div>
 
-                        <!-- ▼ CARGAS TÉRMICAS INTERIORES ▼ -->
+                        <!-- SEPARADOR CARGAS TÉRMICAS INTERIORES -->
                         <div class="text-[10px] font-bold text-[var(--accent-base)] text-center uppercase tracking-widest flex items-center justify-center gap-2 mt-2">
                             <span class="w-8 h-px bg-[var(--accent-base)] opacity-50"></span>
-                            ▼ Cargas Térmicas Interiores ▼
+                            Cargas Térmicas Interiores
                             <span class="w-8 h-px bg-[var(--accent-base)] opacity-50"></span>
                         </div>
 
                         <!-- 4. OCUPANTES, ILUMINACIÓN, EQUIPOS -->
                         <div class="border border-[var(--border-default)] rounded-md bg-[var(--bg-surface)] overflow-hidden">
-                            <div class="px-4 py-2.5 bg-[var(--bg-alt)] border-b border-[var(--border-subtle)] flex items-center gap-2 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('-rotate-90')">
-                                <svg class="w-4 h-4 text-[var(--accent-base)] chevron -rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            <div class="px-4 py-2.5 bg-[var(--bg-alt)] border-b border-[var(--border-subtle)] flex items-center gap-2">
                                 <span class="text-[11px] font-bold text-[var(--accent-base)]">4. OCUPANTES, ILUMINACIÓN, EQUIPOS</span>
                             </div>
-                            <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-6 transition-all hidden">
+                            <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-6 transition-all hidden param-panel">
                                 <div>
                                     <label class="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1">Ocupantes (Personas)</label>
                                     <input type="number" oninput="calculate()" value="2" class="room-people !p-2 font-mono text-sm">
@@ -558,7 +562,7 @@
                 <div class="mt-6 bg-[var(--bg-alt)] border-t border-[var(--border-default)] -mx-6 -mb-6">
                     <div class="px-6 py-4 flex items-center justify-between cursor-pointer group" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('-rotate-90')">
                         <h5 class="font-bold text-[var(--text-primary)] flex items-center gap-2 text-sm">
-                            <svg class="w-5 h-5 text-[var(--accent-base)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            <svg class="w-5 h-5 text-[var(--accent-base)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                             Ver Desgloses de Carga Térmica
                         </h5>
                         <svg class="w-5 h-5 chevron -rotate-90 transition-transform duration-200 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
@@ -611,7 +615,7 @@
                                 <div class="text-sm flex justify-between py-1.5 items-center">
                                     <div class="flex flex-col gap-0.5">
                                         <span class="text-[var(--text-primary)] font-semibold">Transmisión Opacos</span>
-                                        <span class="text-[9px] font-mono text-[var(--text-muted)]"><span class="inline-block text-[8px] font-bold px-1.5 py-[2px] rounded border border-orange-500/50 bg-orange-500/10 text-orange-600 dark:text-orange-400 mr-1 tracking-wider align-middle">SENS</span> Q = U · A · ΔT</span>
+                                        <span class="text-[9px] font-mono text-[var(--text-muted)]"><span class="inline-block text-[8px] font-bold px-1.5 py-[2px] rounded border border-orange-500/50 bg-orange-500/10 text-orange-600 dark:text-orange-400 mr-1 tracking-wider align-middle">SENS</span> Q = U · A · CLTD</span>
                                         <span class="text-[8px] font-mono text-orange-600 dark:text-orange-400 room-form-trans-v"></span>
                                     </div>
                                     <span class="font-mono text-[var(--text-primary)] room-trans-v">0 W</span>
@@ -763,12 +767,24 @@
         }
 
         function addParamento(btn) {
-            const container = btn.closest('.room-card').querySelector('.paramentos-container');
+            const roomCard = btn.closest('.room-card');
+            if(!roomCard) return;
+
+            // Desplegar automáticamente los paneles al añadir fachada si estaban colapsados
+            const panels = roomCard.querySelectorAll('.param-panel.hidden');
+            if (panels.length > 0) {
+                panels.forEach(p => p.classList.remove('hidden'));
+                const mainChev = roomCard.querySelector('.main-chevron');
+                if (mainChev) mainChev.classList.remove('-rotate-90');
+            }
+
+            const container = roomCard.querySelector('.paramentos-container');
             if(!container) return;
             const row = container.querySelector('.paramento-row').cloneNode(true);
             row.querySelector('.room-wall-ext').value = 0;
             row.querySelector('.room-glass').value = 0;
             row.querySelector('.room-orient').value = 0;
+            if(row.querySelector('.room-glass-type')) row.querySelector('.room-glass-type').value = "0.75"; // Resetear a Climalit por defecto
             container.appendChild(row);
             calculate();
         }
@@ -816,6 +832,8 @@
                 const gear = parseFloat(room.querySelector('.room-gear')?.value) || 0;
 
                 // Sumatorio de Paramentos
+                let transV_muros = 0;
+                let transI_muros = 0;
                 let wallExt = 0;
                 let glass = 0;
                 let radiationV = 0;
@@ -825,21 +843,34 @@
                     const pWall = parseFloat(par.querySelector('.room-wall-ext')?.value) || 0;
                     const pGlass = parseFloat(par.querySelector('.room-glass')?.value) || 0;
                     const pOrient = parseFloat(par.querySelector('.room-orient')?.value) || 0;
+                    const pFSolar = parseFloat(par.querySelector('.room-glass-type')?.value) || 0.75; // Recuperación del Factor Solar del vidrio
 
+                    const pNetWall = Math.max(0, pWall - pGlass);
                     wallExt += pWall;
                     glass += pGlass;
+
+                    // --- CÁLCULO ESTÁTICO (Invierno) ---
+                    transI_muros += pNetWall * uMuro * dtI;
+
+                    // --- CÁLCULO DINÁMICO CLTD (Verano) ---
+                    // Diferencia de Temperatura de Carga de Refrigeración según orientación
+                    let cltd = dtV; // Base (Diferencia de temperatura del aire)
+                    if(pOrient === 0) cltd = dtV + 6;       // Sur / Sol Medio
+                    else if(pOrient === 0.10) cltd = dtV + 2; // Norte / Sombra
+                    else if(pOrient === 0.05) cltd = dtV + 12; // Este/Oeste / Sol Pico
+                    
+                    transV_muros += pNetWall * uMuro * cltd;
 
                     let factorRad = 1;
                     if(pOrient === 0.10) factorRad = 0.8; // Norte
                     if(pOrient === 0.05) factorRad = 1.2; // Este/Oeste
-                    radiationV += pGlass * 250 * factorRad; 
+                    radiationV += pGlass * 250 * factorRad * pFSolar; // Multiplicación directa del Factor Solar del vidrio
 
                     if (pOrient > maxOrient) maxOrient = pOrient;
                 });
 
                 // --- CALCULO INVIERNO (Basado estrictamente en método Ponce) ---
-                let transI = 0;
-                transI += Math.max(0, wallExt - glass) * uMuro * dtI; // Muros
+                let transI = transI_muros;
                 transI += glass * uVidrio * dtI;                      // Vidrios
                 transI += area * uSuelo * (dtI * 0.5);                // Suelo (se asume 50% deltaT)
                 transI += area * uTecho * dtI;                        // Techo
@@ -854,20 +885,17 @@
                 const winterSubtotal = transI + infilI + suplI;
                 
                 // --- CALCULO VERANO (Desglose Sensible y Latente) ---
-                let transV = 0;
-                transV += Math.max(0, wallExt - glass) * uMuro * dtV;
-                transV += glass * uVidrio * dtV;
-                transV += area * uTecho * dtV; // En verano se ignora suelo no expuesto por defecto
+                const cltdTecho = dtV + 14; // El techo acumula insolación máxima cenital
+                let transV = transV_muros;
+                transV += glass * uVidrio * dtV; // Vidrio no tiene inercia térmica, usa salto estático (la carga solar va por radiación)
+                transV += area * uTecho * cltdTecho; // Aplicamos CLTD dinámico al techo
 
                 // Ventilación Verano (Separada en Sensible y Latente adaptadas a Altitud)
                 const infilV_sens = volume * renov * cSens * dtV;
                 const infilV_lat = volume * renov * cLat * vDw;
                 const infilV = infilV_sens + infilV_lat;
 
-                // Radiación Solar (Aprox 250W/m2 en ventanas según orientación)
-                let factorRadiacion = 1;
-                if(maxOrient === 0.10) factorRadiacion = 0.8; // Norte
-                if(maxOrient === 0.05) factorRadiacion = 1.2; // Este/Oeste
+                // Radiación Solar
                 // radiationV ya está calculada por paramento. 
 
                 // Cargas internas (Personas: Aprox 75W Sensible, 55W Latente)
@@ -894,11 +922,11 @@
                 roomSummaryData.push({ name: roomName, frio: summerSubtotal, calor: winterSubtotal });
 
                 // --- NUEVO: CREACIÓN DE FÓRMULAS DINÁMICAS (Con los coeficientes calculados) ---
-                const fTransI = `[(${Math.max(0, wallExt - glass).toFixed(1)}·${uMuro}) + (${glass.toFixed(1)}·${uVidrio}) + (${area.toFixed(1)}·${uSuelo}·0.5) + (${area.toFixed(1)}·${uTecho})] · ${dtI}K`;
+                const fTransI = `[ΣMur(${Math.round(transI_muros)}W) + Vid(${glass.toFixed(1)}·${uVidrio}) + Sue(${area.toFixed(1)}·${uSuelo}·0.5) + Cub(${area.toFixed(1)}·${uTecho})] · ${dtI}K`;
                 const fInfilI = `${volume.toFixed(1)}m³ · ${renov}v/h · ${csStr} · ${dtI}K`;
                 const fSuplI = `(${Math.round(transI + infilI)}W) · ${(porcentajeSuplementos * 100).toFixed(0)}%`;
 
-                const fTransV = `[(${Math.max(0, wallExt - glass).toFixed(1)}·${uMuro}) + (${glass.toFixed(1)}·${uVidrio}) + (${area.toFixed(1)}·${uTecho})] · ${dtV}K`;
+                const fTransV = `[ΣMur_CLTD(${Math.round(transV_muros)}W) + Vid(${glass.toFixed(1)}·${uVidrio}·${dtV}K) + Cub(${area.toFixed(1)}·${uTecho}·${cltdTecho}K)]`;
                 const fInfilV_sens = `${volume.toFixed(1)}m³ · ${renov}v/h · ${csStr} · ${dtV}K`;
                 const fInfilV_lat = `${volume.toFixed(1)}m³ · ${renov}v/h · ${clStr} · ${vDw}g/kg`;
                 const avgFactorRad = glass > 0 ? (radiationV / (glass * 250)) : 1;
@@ -1121,6 +1149,12 @@
             imgContainer.onmousedown = (e) => { e.preventDefault(); planoStartX = e.clientX - planoPointX; planoStartY = e.clientY - planoPointY; planoPanning = true; imgContainer.classList.replace('cursor-grab', 'cursor-grabbing'); };
             imgContainer.onmouseup = imgContainer.onmouseleave = () => { planoPanning = false; imgContainer.classList.replace('cursor-grabbing', 'cursor-grab'); };
             imgContainer.onmousemove = (e) => { if (!planoPanning) return; e.preventDefault(); planoPointX = e.clientX - planoStartX; planoPointY = e.clientY - planoStartY; applyPlanoTransform(); };
+            
+            // Soporte táctil (Mobile/Tablet)
+            imgContainer.ontouchstart = (e) => { planoStartX = e.touches[0].clientX - planoPointX; planoStartY = e.touches[0].clientY - planoPointY; planoPanning = true; };
+            imgContainer.ontouchend = imgContainer.ontouchcancel = () => { planoPanning = false; };
+            imgContainer.ontouchmove = (e) => { if (!planoPanning) return; e.preventDefault(); planoPointX = e.touches[0].clientX - planoStartX; planoPointY = e.touches[0].clientY - planoStartY; applyPlanoTransform(); };
+            
             imgContainer.onwheel = (e) => { 
                 e.preventDefault(); 
                 const xs = (e.clientX - imgContainer.getBoundingClientRect().left - planoPointX) / planoScale; 
