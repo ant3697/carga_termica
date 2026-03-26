@@ -405,190 +405,249 @@
 
     <!-- Template de Estancia COMPLETAMENTE DECLARADO -->
     <template id="room-template">
-        <div class="room-card card p-6 border-l-4 border-blue-500 relative transition-all animate-in fade-in duration-300">
-            <button onclick="removeRoom(this)" class="absolute top-4 right-4 text-[var(--text-muted)] hover:text-[#ef4444] transition no-print">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-            </button>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Datos Básicos -->
-                <div class="space-y-4 border-b md:border-b-0 md:border-r pb-4 md:pb-0 md:pr-6 border-[var(--border-subtle)]">
-                    <div>
-                        <label class="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1">Nombre Estancia</label>
-                        <input type="text" placeholder="Ej. Salón" oninput="calculate()" class="room-name font-semibold">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1">Sup. (m²)</label>
-                            <input type="number" oninput="calculate()" value="15" class="room-area">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1">Altura (m)</label>
-                            <input type="number" oninput="calculate()" value="2.8" class="room-height">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1" title="Caudal de aire exterior por exigencia de Calidad de Aire Interior">Renov. Aire (v/h) <span class="text-[9px] text-[var(--accent-base)] font-normal normal-case border border-[var(--border-default)] bg-[var(--bg-alt)] px-1 rounded ml-1">CTE / RITE</span></label>
-                        <div class="flex gap-2 items-center">
-                            <select onchange="this.nextElementSibling.value = this.value; calculate()" class="w-full text-[11px] font-semibold text-[var(--text-primary)] !p-2 truncate cursor-pointer">
-                                <option value="0.5">Vivienda (CTE HS3) - Salón/Dorm. (0.5)</option>
-                                <option value="2.0">Vivienda (CTE HS3) - Cocina/Baño (2.0)</option>
-                                <option value="1.5">RITE IDA 2 - Oficinas/Aulas (1.5)</option>
-                                <option value="1.0" selected>RITE IDA 3 - Comercial (1.0)</option>
-                                <option value="3.0">RITE IDA 1 - Sanidad/Guardería (3.0)</option>
-                            </select>
-                            <input type="number" oninput="calculate()" value="1" step="0.1" class="room-renov !w-16 !p-1.5 text-center font-mono font-bold text-[var(--text-primary)]">
-                        </div>
-                    </div>
+        <div class="room-card card border-l-4 border-blue-500 relative transition-all animate-in fade-in duration-300 overflow-hidden">
+            
+            <!-- HEADER DE ESTANCIA COLAPSABLE -->
+            <div class="p-3 md:p-4 flex flex-col md:flex-row md:items-center justify-between cursor-pointer bg-[var(--bg-surface)] hover:bg-[var(--bg-alt)] transition-colors gap-3 md:gap-2" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('-rotate-90')">
+                <div class="flex items-center gap-2 flex-1 w-full md:w-auto">
+                    <svg class="w-5 h-5 chevron -rotate-90 transition-transform duration-200 text-[var(--text-muted)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    <input type="text" placeholder="Nombre (Ej. Salón)" oninput="calculate()" onclick="event.stopPropagation();" class="room-name font-bold !p-2 text-sm md:text-base w-full bg-transparent border border-transparent hover:border-[var(--border-subtle)] focus:border-[var(--accent-base)] focus:bg-[var(--bg-surface)] transition-all rounded outline-none" title="Nombre de la estancia">
                 </div>
-
-                <!-- Detalles Técnicos y Suplementos -->
-                <div class="space-y-4 border-b md:border-b-0 md:border-r pb-4 md:pb-0 md:pr-6 border-[var(--border-subtle)]">
-                    <div class="flex justify-between items-center">
-                        <h4 class="text-xs font-bold text-[var(--text-muted)] uppercase">Cerramientos (Paramentos)</h4>
-                        <button onclick="addParamento(this)" class="text-[10px] font-bold text-[var(--accent-base)] hover:underline no-print">+ Añadir Fachada</button>
-                    </div>
-                    <div class="paramentos-container space-y-3">
-                        <div class="paramento-row relative group transition-all pb-3 border-b border-[var(--border-subtle)] last:border-0 last:pb-0">
-                            <button onclick="if(this.closest('.paramentos-container').children.length > 1) { this.closest('.paramento-row').remove(); calculate(); }" class="absolute top-1 right-0 text-[var(--text-muted)] hover:text-[#ef4444] transition-colors opacity-0 group-hover:opacity-100 no-print" title="Eliminar paramento">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
-                            <div class="grid grid-cols-2 gap-3 mb-2 pr-6">
-                                <div>
-                                    <label class="block text-[9px] text-[var(--text-muted)] mb-1 font-bold">Muro Ext. (m²)</label>
-                                    <input type="number" oninput="calculate()" value="0" class="room-wall-ext !p-1.5 text-xs text-center font-mono">
-                                </div>
-                                <div>
-                                    <label class="block text-[9px] text-[var(--text-muted)] mb-1 font-bold">Vidrio (m²)</label>
-                                    <input type="number" oninput="calculate()" value="0" class="room-glass !p-1.5 text-xs text-center font-mono">
-                                </div>
-                            </div>
-                            <div class="pr-6">
-                                <select onchange="calculate()" class="room-orient font-semibold text-[11px] !p-1.5 w-full text-[var(--text-primary)]">
-                                    <option value="0">Sur / Interior (+0%)</option>
-                                    <option value="0.10">Norte (+10%)</option>
-                                    <option value="0.05">Este / Oeste (+5%)</option>
-                                </select>
-                            </div>
+                
+                <div class="flex items-center justify-between w-full md:w-auto md:shrink-0 pl-7 md:pl-0">
+                    <div class="flex items-center gap-3 mr-4">
+                        <div class="flex items-center gap-1" title="Superficie (m²)">
+                            <span class="text-[10px] font-bold text-[var(--text-muted)] uppercase">Sup.</span>
+                            <input type="number" oninput="calculate()" value="15" onclick="event.stopPropagation();" class="room-area !p-1 text-xs text-center font-mono w-16 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded">
+                        </div>
+                        <div class="flex items-center gap-1" title="Altura (m)">
+                            <span class="text-[10px] font-bold text-[var(--text-muted)] uppercase">Alt.</span>
+                            <input type="number" oninput="calculate()" value="2.8" onclick="event.stopPropagation();" class="room-height !p-1 text-xs text-center font-mono w-14 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded">
                         </div>
                     </div>
-                    <div class="pt-3 border-t border-[var(--border-default)]">
-                        <label class="block text-[10px] text-[var(--text-muted)] mb-1 font-bold">Supl. Intermitencia</label>
-                        <select onchange="calculate()" class="room-intermitencia font-semibold text-xs !p-1.5 text-[var(--text-primary)]">
-                            <option value="0.10">Normal (+10%)</option>
-                            <option value="0.20">Alta (+20%)</option>
-                            <option value="0">Continua (+0%)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Cargas Internas (Verano) -->
-                <div class="space-y-4">
-                    <h4 class="text-xs font-bold text-[var(--text-muted)] uppercase">Cargas Internas (Verano)</h4>
-                    <div>
-                        <label class="block text-xs text-[var(--text-muted)] mb-1">Ocupantes (Personas)</label>
-                        <input type="number" oninput="calculate()" value="2" class="room-people">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-[var(--text-muted)] mb-1">Equipos y Luces (W)</label>
-                        <input type="number" oninput="calculate()" value="150" class="room-gear">
+                    
+                    <div class="flex items-center gap-3 shrink-0 pr-2">
+                        <!-- Resumen rápido visible al estar colapsado -->
+                        <div class="text-[10px] md:text-xs font-mono font-bold flex flex-col text-right">
+                            <span class="text-blue-500" title="Carga Frío (Verano)"><span class="room-res-v-summary">0</span> W ❄</span>
+                            <span class="text-orange-500" title="Carga Calor (Invierno)"><span class="room-res-i-summary">0</span> W 🔥</span>
+                        </div>
+                        <button onclick="event.stopPropagation(); removeRoom(this);" class="text-[var(--text-muted)] hover:text-[#ef4444] transition no-print p-1.5 rounded-lg hover:bg-red-500/10" title="Eliminar Estancia">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Desglose de Resultados (Collapsables) -->
-            <div class="mt-6 bg-[var(--bg-alt)] rounded-lg border border-[var(--border-default)]">
-                <div class="p-4 flex items-center justify-between cursor-pointer group" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-180')">
-                    <h5 class="font-bold text-[var(--text-primary)] flex items-center gap-2 text-sm">
-                        <svg class="w-5 h-5 text-[var(--accent-base)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                        Ver Desgloses de Carga Térmica
-                    </h5>
-                    <svg class="w-5 h-5 chevron transition-transform duration-200 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            <!-- CONTENIDO DE LA ESTANCIA (Colapsado por defecto con clase 'hidden') -->
+            <div class="room-content hidden p-6 pt-4 border-t border-[var(--border-default)]">
+
+                <!-- ▼ CARGAS TÉRMICAS EXTERIORES ▼ -->
+                <div class="text-[10px] font-bold text-[var(--accent-base)] text-center uppercase tracking-widest mb-3 flex items-center justify-center gap-2">
+                    <span class="w-8 h-px bg-[var(--accent-base)] opacity-50"></span>
+                    ▼ Cargas Térmicas Exteriores ▼
+                    <span class="w-8 h-px bg-[var(--accent-base)] opacity-50"></span>
                 </div>
                 
-                <div class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 p-4 pt-0 border-t border-[var(--border-default)] mt-2">
-                    <!-- Desglose Invierno -->
-                    <div>
-                        <h5 class="font-bold text-orange-600 dark:text-orange-500 mb-2 border-b border-[var(--border-default)] pb-1 flex items-center gap-2 text-sm">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"></path></svg>
-                            Invierno (Calor)
-                        </h5>
-                        <div class="space-y-1 transition-all">
-                            <div class="text-sm flex justify-between py-1.5 items-center">
-                                <div class="flex flex-col">
-                                    <span class="text-[var(--text-primary)] font-semibold">Transmisión Opacos y Huecos</span>
-                                    <span class="text-[9px] font-mono text-[var(--text-muted)]"><span class="text-orange-500 font-bold">SENS:</span> Q = U · A · ΔT</span>
-                                    <span class="text-[8px] font-mono text-orange-600 dark:text-orange-400 room-form-trans-i"></span>
-                                </div>
-                                <span class="font-mono text-[var(--text-primary)] room-trans-i">0 W</span>
+                <!-- GRID COMBINADO PARA 1 y 2, y 3 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                    <!-- 1 y 2. TRANSMISIÓN OPACOS Y SEMITRANSPARENTES -->
+                    <div class="border border-[var(--border-default)] rounded-md bg-[var(--bg-surface)] overflow-hidden flex flex-col h-full">
+                        <div class="px-4 py-2.5 bg-[var(--bg-alt)] border-b border-[var(--border-subtle)] flex items-center justify-between gap-2 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('-rotate-90')">
+                            <div class="flex items-center gap-2 truncate">
+                                <svg class="w-4 h-4 text-[var(--accent-base)] chevron -rotate-90 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                <span class="text-[11px] font-bold text-[var(--accent-base)] truncate">1 y 2. TRANSMISIÓN (cte db-he1)</span>
                             </div>
-                            <div class="text-sm flex justify-between py-1.5 items-center">
-                                <div class="flex flex-col">
-                                    <span class="text-[var(--text-primary)] font-semibold">Infiltración y Ventilación</span>
-                                    <span class="text-[9px] font-mono text-[var(--text-muted)]"><span class="text-orange-500 font-bold">SENS:</span> Q = V · C_sens · ΔT</span>
-                                    <span class="text-[8px] font-mono text-orange-600 dark:text-orange-400 room-form-infil-i"></span>
-                                </div>
-                                <span class="font-mono text-[var(--text-primary)] room-infil-i">0 W</span>
-                            </div>
-                            <div class="text-sm flex justify-between py-1.5 items-center">
-                                <div class="flex flex-col">
-                                    <span class="text-[var(--text-primary)] font-semibold">Suplementos de Seguridad</span>
-                                    <span class="text-[9px] font-mono text-[var(--text-muted)]"><span class="text-orange-500 font-bold">SENS:</span> + % (Orient. + Intermit.)</span>
-                                    <span class="text-[8px] font-mono text-orange-600 dark:text-orange-400 room-form-supl-i"></span>
-                                </div>
-                                <span class="font-mono text-[var(--text-primary)] room-supl-i">0 W</span>
-                            </div>
+                            <button onclick="event.stopPropagation(); addParamento(this)" class="text-[10px] font-bold text-[var(--text-primary)] hover:text-[var(--accent-base)] bg-[var(--bg-app)] px-2 py-1 rounded border border-[var(--border-strong)] no-print transition-colors shadow-sm shrink-0">+ Fachada</button>
                         </div>
-                        <div class="text-base flex justify-between font-bold mt-2 pt-2 border-t border-[var(--border-default)]">
-                            <span class="text-[var(--text-primary)]">TOTAL INVIERNO:</span> <span class="text-orange-600 dark:text-orange-400 room-res-i">0 W</span>
+                        <div class="p-4 transition-all hidden flex-1 flex flex-col">
+                            <div class="paramentos-container space-y-3 flex-1">
+                                <div class="paramento-row relative group transition-all pb-3 border-b border-[var(--border-subtle)] last:border-0 last:pb-0">
+                                    <button onclick="if(this.closest('.paramentos-container').children.length > 1) { this.closest('.paramento-row').remove(); calculate(); }" class="absolute top-1 right-0 text-[var(--text-muted)] hover:text-[#ef4444] transition-colors opacity-0 group-hover:opacity-100 no-print" title="Eliminar paramento">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                    <div class="grid grid-cols-2 gap-4 pr-6 mb-2">
+                                        <div>
+                                            <label class="block text-[9px] text-[var(--text-muted)] mb-1 font-bold">Muro Ext. (m²)</label>
+                                            <input type="number" oninput="calculate()" value="0" class="room-wall-ext !p-1.5 text-xs text-center font-mono w-full">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[9px] text-[var(--text-muted)] mb-1 font-bold">Vidrio (m²)</label>
+                                            <input type="number" oninput="calculate()" value="0" class="room-glass !p-1.5 text-xs text-center font-mono w-full">
+                                        </div>
+                                    </div>
+                                    <div class="pr-6">
+                                        <select onchange="calculate()" class="room-orient font-semibold text-[11px] !p-1.5 w-full text-[var(--text-primary)]">
+                                            <option value="0">Sur / Interior (+0%)</option>
+                                            <option value="0.10">Norte (+10%)</option>
+                                            <option value="0.05">Este / Oeste (+5%)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pt-3 mt-3 border-t border-[var(--border-default)] flex items-center justify-between gap-2 shrink-0">
+                                <label class="text-[9px] text-[var(--text-muted)] font-bold uppercase">Intermitencia:</label>
+                                <select onchange="calculate()" class="room-intermitencia font-semibold text-[11px] !p-1.5 text-[var(--text-primary)] w-32">
+                                    <option value="0.10">Normal (+10%)</option>
+                                    <option value="0.20">Alta (+20%)</option>
+                                    <option value="0">Continua (+0%)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-                    <!-- Desglose Verano -->
-                    <div>
-                        <h5 class="font-bold text-blue-600 dark:text-blue-500 mb-2 border-b border-[var(--border-default)] pb-1 flex items-center gap-2 text-sm">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                            Verano (Frío)
-                        </h5>
-                        <div class="space-y-1 transition-all">
-                            <div class="text-sm flex justify-between py-1.5 items-center">
-                                <div class="flex flex-col">
-                                    <span class="text-[var(--text-primary)] font-semibold">Transmisión Opacos</span>
-                                    <span class="text-[9px] font-mono text-[var(--text-muted)]"><span class="text-orange-500 font-bold">SENS:</span> Q = U · A · ΔT</span>
-                                    <span class="text-[8px] font-mono text-orange-600 dark:text-orange-400 room-form-trans-v"></span>
-                                </div>
-                                <span class="font-mono text-[var(--text-primary)] room-trans-v">0 W</span>
+
+                    <!-- COLUMNA DERECHA: VENTILACIÓN + INTERIORES -->
+                    <div class="flex flex-col gap-4">
+                        <!-- 3. VENTILACIÓN E INFILTRACIÓN -->
+                        <div class="border border-[var(--border-default)] rounded-md bg-[var(--bg-surface)] overflow-hidden flex flex-col">
+                            <div class="px-4 py-2.5 bg-[var(--bg-alt)] border-b border-[var(--border-subtle)] flex items-center gap-2 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('-rotate-90')">
+                                <svg class="w-4 h-4 text-[var(--accent-base)] chevron -rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                <span class="text-[11px] font-bold text-[var(--accent-base)]">3. VENTILACIÓN (RITE IDA)</span>
                             </div>
-                            <div class="text-sm flex justify-between py-1.5 items-center">
-                                <div class="flex flex-col">
-                                    <span class="text-[var(--text-primary)] font-semibold">Ventilación</span>
-                                    <span class="text-[9px] font-mono text-[var(--text-muted)]"><span class="text-orange-500 font-bold">SENS:</span> Q = V · C_sens · ΔT</span>
-                                    <span class="text-[8px] font-mono text-orange-600 dark:text-orange-400 room-form-infil-v-sens"></span>
-                                    <span class="text-[9px] font-mono text-[var(--text-muted)] mt-1"><span class="text-teal-500 font-bold">LAT:</span> Q = V · C_lat · Δw</span>
-                                    <span class="text-[8px] font-mono text-teal-600 dark:text-teal-400 room-form-infil-v-lat"></span>
+                            <div class="p-4 transition-all hidden flex-1">
+                                <div class="flex flex-col gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-2" title="Tasas normativas de renovación de aire">Renovación de Aire (v/h):</label>
+                                        <select onchange="this.parentElement.querySelector('.room-renov').value = this.value; calculate()" class="font-semibold text-[11px] !p-2 text-[var(--text-primary)] w-full mb-3 border border-[var(--border-default)] rounded bg-[var(--bg-surface)]">
+                                            <option value="0.5">Viviendas - Dormitorios/Salones (0.5 v/h)</option>
+                                            <option value="1.0" selected>RITE IDA 3 - Comercial/Zonas Comunes (1.0 v/h)</option>
+                                            <option value="1.5">RITE IDA 2 - Oficinas/Bibliotecas (1.5 v/h)</option>
+                                            <option value="2.0">Viviendas - Cocinas/Baños (2.0 v/h)</option>
+                                            <option value="2.5">RITE IDA 2 - Aulas/Salas Reunión (2.5 v/h)</option>
+                                            <option value="3.0">RITE IDA 1 - Sanidad/Guarderías (3.0 v/h)</option>
+                                            <option value="4.0">Gimnasios/Locales alta ocupación (4.0 v/h)</option>
+                                            <option value="6.0">Garajes/Extracción (6.0 v/h)</option>
+                                        </select>
+                                        <div class="flex gap-2 items-center">
+                                            <label class="text-[10px] font-bold text-[var(--text-muted)] uppercase whitespace-nowrap">Valor Manual:</label>
+                                            <input type="number" oninput="calculate()" value="1" step="0.1" class="room-renov w-full !p-1.5 text-center font-mono font-bold text-[var(--text-primary)]" title="v/h manual">
+                                        </div>
+                                    </div>
                                 </div>
-                                <span class="font-mono text-[var(--text-primary)] room-infil-v">0 W</span>
-                            </div>
-                            <div class="text-sm flex justify-between py-1.5 items-center">
-                                <div class="flex flex-col">
-                                    <span class="text-[var(--text-primary)] font-semibold">Radiación Vidrios</span>
-                                    <span class="text-[9px] font-mono text-[var(--text-muted)]"><span class="text-orange-500 font-bold">SENS:</span> Q = A · I · F_solar</span>
-                                    <span class="text-[8px] font-mono text-orange-600 dark:text-orange-400 room-form-rad-v"></span>
-                                </div>
-                                <span class="font-mono text-[var(--text-primary)] room-rad-v">0 W</span>
-                            </div>
-                            <div class="text-sm flex justify-between py-1.5 items-center">
-                                <div class="flex flex-col">
-                                    <span class="text-[var(--text-primary)] font-semibold">Cargas Internas</span>
-                                    <span class="text-[9px] font-mono text-[var(--text-muted)]"><span class="text-orange-500 font-bold">SENS:</span> Q = Ocupantes(S) + Equipos</span>
-                                    <span class="text-[8px] font-mono text-orange-600 dark:text-orange-400 room-form-int-v-sens"></span>
-                                    <span class="text-[9px] font-mono text-[var(--text-muted)] mt-1"><span class="text-teal-500 font-bold">LAT:</span> Q = Ocupantes(L)</span>
-                                    <span class="text-[8px] font-mono text-teal-600 dark:text-teal-400 room-form-int-v-lat"></span>
-                                </div>
-                                <span class="font-mono text-[var(--text-primary)] room-int-v">0 W</span>
                             </div>
                         </div>
-                        <div class="text-base flex justify-between font-bold mt-2 pt-2 border-t border-[var(--border-default)]">
-                            <span class="text-[var(--text-primary)]">TOTAL VERANO:</span> <span class="text-blue-600 dark:text-blue-400 room-res-v">0 W</span>
+
+                        <!-- ▼ CARGAS TÉRMICAS INTERIORES ▼ -->
+                        <div class="text-[10px] font-bold text-[var(--accent-base)] text-center uppercase tracking-widest flex items-center justify-center gap-2 mt-2">
+                            <span class="w-8 h-px bg-[var(--accent-base)] opacity-50"></span>
+                            ▼ Cargas Térmicas Interiores ▼
+                            <span class="w-8 h-px bg-[var(--accent-base)] opacity-50"></span>
+                        </div>
+
+                        <!-- 4. OCUPANTES, ILUMINACIÓN, EQUIPOS -->
+                        <div class="border border-[var(--border-default)] rounded-md bg-[var(--bg-surface)] overflow-hidden">
+                            <div class="px-4 py-2.5 bg-[var(--bg-alt)] border-b border-[var(--border-subtle)] flex items-center gap-2 cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('-rotate-90')">
+                                <svg class="w-4 h-4 text-[var(--accent-base)] chevron -rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                <span class="text-[11px] font-bold text-[var(--accent-base)]">4. OCUPANTES, ILUMINACIÓN, EQUIPOS</span>
+                            </div>
+                            <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-6 transition-all hidden">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1">Ocupantes (Personas)</label>
+                                    <input type="number" oninput="calculate()" value="2" class="room-people !p-2 font-mono text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1">Equipos y Luces (W)</label>
+                                    <input type="number" oninput="calculate()" value="150" class="room-gear !p-2 font-mono text-sm">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desglose de Resultados (Collapsables) -->
+                <div class="mt-6 bg-[var(--bg-alt)] border-t border-[var(--border-default)] -mx-6 -mb-6">
+                    <div class="px-6 py-4 flex items-center justify-between cursor-pointer group" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('-rotate-90')">
+                        <h5 class="font-bold text-[var(--text-primary)] flex items-center gap-2 text-sm">
+                            <svg class="w-5 h-5 text-[var(--accent-base)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            Ver Desgloses de Carga Térmica
+                        </h5>
+                        <svg class="w-5 h-5 chevron -rotate-90 transition-transform duration-200 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                    
+                    <div class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 px-6 pb-6 pt-0 border-t border-[var(--border-default)] mt-2">
+                        <!-- Desglose Invierno -->
+                        <div>
+                            <h5 class="font-bold text-orange-600 dark:text-orange-500 mb-2 border-b border-[var(--border-default)] pb-1 flex items-center gap-2 text-sm">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"></path></svg>
+                                Invierno (Calor)
+                            </h5>
+                            <div class="space-y-1 transition-all">
+                                <div class="text-sm flex justify-between py-1.5 items-center">
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="text-[var(--text-primary)] font-semibold">Transmisión Opacos y Huecos</span>
+                                        <span class="text-[9px] font-mono text-[var(--text-muted)]"><span class="inline-block text-[8px] font-bold px-1.5 py-[2px] rounded border border-orange-500/50 bg-orange-500/10 text-orange-600 dark:text-orange-400 mr-1 tracking-wider align-middle">SENS</span> Q = U · A · ΔT</span>
+                                        <span class="text-[8px] font-mono text-orange-600 dark:text-orange-400 room-form-trans-i"></span>
+                                    </div>
+                                    <span class="font-mono text-[var(--text-primary)] room-trans-i">0 W</span>
+                                </div>
+                                <div class="text-sm flex justify-between py-1.5 items-center">
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="text-[var(--text-primary)] font-semibold">Infiltración y Ventilación</span>
+                                        <span class="text-[9px] font-mono text-[var(--text-muted)]"><span class="inline-block text-[8px] font-bold px-1.5 py-[2px] rounded border border-orange-500/50 bg-orange-500/10 text-orange-600 dark:text-orange-400 mr-1 tracking-wider align-middle">SENS</span> Q = V · C_sens · ΔT</span>
+                                        <span class="text-[8px] font-mono text-orange-600 dark:text-orange-400 room-form-infil-i"></span>
+                                    </div>
+                                    <span class="font-mono text-[var(--text-primary)] room-infil-i">0 W</span>
+                                </div>
+                                <div class="text-sm flex justify-between py-1.5 items-center">
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="text-[var(--text-primary)] font-semibold">Suplementos de Seguridad</span>
+                                        <span class="text-[9px] font-mono text-[var(--text-muted)]"><span class="inline-block text-[8px] font-bold px-1.5 py-[2px] rounded border border-orange-500/50 bg-orange-500/10 text-orange-600 dark:text-orange-400 mr-1 tracking-wider align-middle">SENS</span> + % (Orient. + Intermit.)</span>
+                                        <span class="text-[8px] font-mono text-orange-600 dark:text-orange-400 room-form-supl-i"></span>
+                                    </div>
+                                    <span class="font-mono text-[var(--text-primary)] room-supl-i">0 W</span>
+                                </div>
+                            </div>
+                            <div class="text-base flex justify-between font-bold mt-2 pt-2 border-t border-[var(--border-default)]">
+                                <span class="text-[var(--text-primary)]">TOTAL INVIERNO:</span> <span class="text-orange-600 dark:text-orange-400 room-res-i">0 W</span>
+                            </div>
+                        </div>
+                        <!-- Desglose Verano -->
+                        <div>
+                            <h5 class="font-bold text-blue-600 dark:text-blue-500 mb-2 border-b border-[var(--border-default)] pb-1 flex items-center gap-2 text-sm">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                                Verano (Frío)
+                            </h5>
+                            <div class="space-y-1 transition-all">
+                                <div class="text-sm flex justify-between py-1.5 items-center">
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="text-[var(--text-primary)] font-semibold">Transmisión Opacos</span>
+                                        <span class="text-[9px] font-mono text-[var(--text-muted)]"><span class="inline-block text-[8px] font-bold px-1.5 py-[2px] rounded border border-orange-500/50 bg-orange-500/10 text-orange-600 dark:text-orange-400 mr-1 tracking-wider align-middle">SENS</span> Q = U · A · ΔT</span>
+                                        <span class="text-[8px] font-mono text-orange-600 dark:text-orange-400 room-form-trans-v"></span>
+                                    </div>
+                                    <span class="font-mono text-[var(--text-primary)] room-trans-v">0 W</span>
+                                </div>
+                                <div class="text-sm flex justify-between py-1.5 items-center">
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="text-[var(--text-primary)] font-semibold">Ventilación</span>
+                                        <span class="text-[9px] font-mono text-[var(--text-muted)]"><span class="inline-block text-[8px] font-bold px-1.5 py-[2px] rounded border border-orange-500/50 bg-orange-500/10 text-orange-600 dark:text-orange-400 mr-1 tracking-wider align-middle">SENS</span> Q = V · C_sens · ΔT</span>
+                                        <span class="text-[8px] font-mono text-orange-600 dark:text-orange-400 room-form-infil-v-sens"></span>
+                                        <span class="text-[9px] font-mono text-[var(--text-muted)] mt-1"><span class="inline-block text-[8px] font-bold px-1.5 py-[2px] rounded border border-teal-500/50 bg-teal-500/10 text-teal-600 dark:text-teal-400 mr-1 tracking-wider align-middle">LAT</span> Q = V · C_lat · Δw</span>
+                                        <span class="text-[8px] font-mono text-teal-600 dark:text-teal-400 room-form-infil-v-lat"></span>
+                                    </div>
+                                    <span class="font-mono text-[var(--text-primary)] room-infil-v">0 W</span>
+                                </div>
+                                <div class="text-sm flex justify-between py-1.5 items-center">
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="text-[var(--text-primary)] font-semibold">Radiación Vidrios</span>
+                                        <span class="text-[9px] font-mono text-[var(--text-muted)]"><span class="inline-block text-[8px] font-bold px-1.5 py-[2px] rounded border border-orange-500/50 bg-orange-500/10 text-orange-600 dark:text-orange-400 mr-1 tracking-wider align-middle">SENS</span> Q = A · I · F_solar</span>
+                                        <span class="text-[8px] font-mono text-orange-600 dark:text-orange-400 room-form-rad-v"></span>
+                                    </div>
+                                    <span class="font-mono text-[var(--text-primary)] room-rad-v">0 W</span>
+                                </div>
+                                <div class="text-sm flex justify-between py-1.5 items-center">
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="text-[var(--text-primary)] font-semibold">Cargas Internas</span>
+                                        <span class="text-[9px] font-mono text-[var(--text-muted)]"><span class="inline-block text-[8px] font-bold px-1.5 py-[2px] rounded border border-orange-500/50 bg-orange-500/10 text-orange-600 dark:text-orange-400 mr-1 tracking-wider align-middle">SENS</span> Q = Ocupantes(S) + Equipos</span>
+                                        <span class="text-[8px] font-mono text-orange-600 dark:text-orange-400 room-form-int-v-sens"></span>
+                                        <span class="text-[9px] font-mono text-[var(--text-muted)] mt-1"><span class="inline-block text-[8px] font-bold px-1.5 py-[2px] rounded border border-teal-500/50 bg-teal-500/10 text-teal-600 dark:text-teal-400 mr-1 tracking-wider align-middle">LAT</span> Q = Ocupantes(L)</span>
+                                        <span class="text-[8px] font-mono text-teal-600 dark:text-teal-400 room-form-int-v-lat"></span>
+                                    </div>
+                                    <span class="font-mono text-[var(--text-primary)] room-int-v">0 W</span>
+                                </div>
+                            </div>
+                            <div class="text-base flex justify-between font-bold mt-2 pt-2 border-t border-[var(--border-default)]">
+                                <span class="text-[var(--text-primary)]">TOTAL VERANO:</span> <span class="text-blue-600 dark:text-blue-400 room-res-v">0 W</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -704,7 +763,7 @@
         }
 
         function addParamento(btn) {
-            const container = btn.closest('.space-y-4').querySelector('.paramentos-container');
+            const container = btn.closest('.room-card').querySelector('.paramentos-container');
             if(!container) return;
             const row = container.querySelector('.paramento-row').cloneNode(true);
             row.querySelector('.room-wall-ext').value = 0;
@@ -858,6 +917,7 @@
                 const elFormSuplI = room.querySelector('.room-form-supl-i'); if(elFormSuplI) elFormSuplI.innerText = `= ${fSuplI}`;
                 
                 const elResI = room.querySelector('.room-res-i'); if(elResI) elResI.innerText = Math.round(winterSubtotal) + " W";
+                const elResISummary = room.querySelector('.room-res-i-summary'); if(elResISummary) elResISummary.innerText = Math.round(winterSubtotal);
 
                 // Actualizar desglose UI de estancia VERANO (Con validación de nodos y fórmulas)
                 const elTransV = room.querySelector('.room-trans-v'); if(elTransV) elTransV.innerText = Math.round(transV) + " W";
@@ -875,6 +935,7 @@
                 const elFormIntVLat = room.querySelector('.room-form-int-v-lat'); if(elFormIntVLat) elFormIntVLat.innerText = `= ${fIntV_lat}`;
                 
                 const elResV = room.querySelector('.room-res-v'); if(elResV) elResV.innerText = Math.round(summerSubtotal) + " W";
+                const elResVSummary = room.querySelector('.room-res-v-summary'); if(elResVSummary) elResVSummary.innerText = Math.round(summerSubtotal);
 
                 totalV_sens += summerSensible;
                 totalV_lat += summerLatent;
@@ -998,8 +1059,10 @@
             const provInput = document.getElementById('proj-provincia');
             if(provInput) {
                 provInput.value = 'malaga';
-                loadProvinciaData(); // Esto dispara el primer calculate()
             }
+            
+            // Disparar carga de forma segura
+            loadProvinciaData();
             
             // Si después de cargar la provincia no hay estancias, añadir la primera
             if(document.querySelectorAll('.room-card').length === 0) {
@@ -1012,6 +1075,41 @@
                 new Sortable(uLayersEl, { handle: '.u-drag-handle', animation: 150, onEnd: calculateUModal });
             }
         };
+
+        // --- BASE DE DATOS CLIMÁTICA ---
+        const PROVINCIAS_DATA = {
+            'malaga': { vExt: 34, iExt: 2, alt: 10 },
+            'almeria': { vExt: 33, iExt: 5, alt: 20 },
+            'cadiz': { vExt: 33, iExt: 5, alt: 10 },
+            'cordoba': { vExt: 40, iExt: -1, alt: 120 },
+            'granada': { vExt: 36, iExt: -3, alt: 680 },
+            'huelva': { vExt: 35, iExt: 3, alt: 20 },
+            'jaen': { vExt: 38, iExt: -1, alt: 570 },
+            'sevilla': { vExt: 38, iExt: 1, alt: 10 },
+            'madrid': { vExt: 36, iExt: -3, alt: 650 },
+            'barcelona': { vExt: 31, iExt: 1, alt: 15 },
+            'valencia': { vExt: 31, iExt: 2, alt: 15 },
+            'bilbao': { vExt: 30, iExt: 2, alt: 20 },
+            'alicante': { vExt: 32, iExt: 3, alt: 10 },
+            'zaragoza': { vExt: 36, iExt: -3, alt: 240 },
+            'coruna': { vExt: 26, iExt: 2, alt: 20 }
+        };
+
+        function loadProvinciaData() {
+            const provEl = document.getElementById('proj-provincia');
+            if(!provEl) return;
+            const prov = provEl.value;
+            if(prov && PROVINCIAS_DATA[prov]) {
+                const data = PROVINCIAS_DATA[prov];
+                const tExtV = document.getElementById('t_ext_v');
+                if(tExtV) tExtV.value = data.vExt;
+                const tExtI = document.getElementById('t_ext_i');
+                if(tExtI) tExtI.value = data.iExt;
+                const altInput = document.getElementById('proj_alt');
+                if(altInput) altInput.value = data.alt || 0;
+                calculate();
+            }
+        }
 
         // --- LÓGICA DEL VISOR DE PLANOS ---
         let planoScale = 1, planoPanning = false, planoPointX = 0, planoPointY = 0, planoStartX = 0, planoStartY = 0;
@@ -1074,41 +1172,6 @@
         function applyPlanoTransform() { 
             const planoImg = document.getElementById('plano-img');
             if(planoImg) planoImg.style.transform = `translate(${planoPointX}px, ${planoPointY}px) scale(${planoScale})`; 
-        }
-
-        // --- BASE DE DATOS CLIMÁTICA ---
-        const PROVINCIAS_DATA = {
-            'malaga': { vExt: 34, iExt: 2, alt: 10 },
-            'almeria': { vExt: 33, iExt: 5, alt: 20 },
-            'cadiz': { vExt: 33, iExt: 5, alt: 10 },
-            'cordoba': { vExt: 40, iExt: -1, alt: 120 },
-            'granada': { vExt: 36, iExt: -3, alt: 680 },
-            'huelva': { vExt: 35, iExt: 3, alt: 20 },
-            'jaen': { vExt: 38, iExt: -1, alt: 570 },
-            'sevilla': { vExt: 38, iExt: 1, alt: 10 },
-            'madrid': { vExt: 36, iExt: -3, alt: 650 },
-            'barcelona': { vExt: 31, iExt: 1, alt: 15 },
-            'valencia': { vExt: 31, iExt: 2, alt: 15 },
-            'bilbao': { vExt: 30, iExt: 2, alt: 20 },
-            'alicante': { vExt: 32, iExt: 3, alt: 10 },
-            'zaragoza': { vExt: 36, iExt: -3, alt: 240 },
-            'coruna': { vExt: 26, iExt: 2, alt: 20 }
-        };
-
-        function loadProvinciaData() {
-            const provEl = document.getElementById('proj-provincia');
-            if(!provEl) return;
-            const prov = provEl.value;
-            if(prov && PROVINCIAS_DATA[prov]) {
-                const data = PROVINCIAS_DATA[prov];
-                const tExtV = document.getElementById('t_ext_v');
-                if(tExtV) tExtV.value = data.vExt;
-                const tExtI = document.getElementById('t_ext_i');
-                if(tExtI) tExtI.value = data.iExt;
-                const altInput = document.getElementById('proj_alt');
-                if(altInput) altInput.value = data.alt || 0;
-                calculate();
-            }
         }
 
         // --- CALCULADORA DE TRANSMITANCIA (U) ---
