@@ -1,0 +1,7 @@
+# Ignorar el ejecutable de Tailwind (es muy grande)
+tailwindcss.exe
+
+# Ignorar posibles carpetas futuras
+node_modules/
+dist/
+*.log
