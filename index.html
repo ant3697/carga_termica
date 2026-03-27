@@ -33,6 +33,11 @@
             --accent-base: #fbbf24; --accent-ghost: rgba(251, 191, 36, 0.15);
             --shadow-glow: 0 0 10px rgba(251, 191, 36, 0.6);
         }
+
+        /* Fallback de emergencia si falla Tailwind CDN (Ej. Redes Corporativas o AdBlockers) */
+        svg { max-width: 24px; max-height: 24px; }
+        .hidden { display: none !important; }
+
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-app); color: var(--text-primary); }
         
         .technical-font { font-family: 'Roboto Condensed', sans-serif; }
@@ -73,6 +78,7 @@
                     <span class="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 px-2 py-1 rounded border border-emerald-200 dark:border-emerald-800 font-bold uppercase tracking-widest align-middle flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> CTE & RITE</span>
                 </h1>
                 <p class="text-[var(--text-muted)]">Estudio Técnico de Verano e Invierno</p>
+                <p class="text-xs text-[var(--text-muted)] opacity-75 mt-1">Desarrollado por <strong>Prof. Antonio Díaz Pérez</strong></p>
             </div>
             <div class="flex gap-2">
                 <button onclick="toggleTheme()" class="btn-secondary no-print" title="Cambiar Tema">🌓</button>
@@ -527,14 +533,14 @@
                                     <div>
                                         <label class="block text-[10px] font-bold text-[var(--text-muted)] uppercase mb-2" title="Tasas normativas de renovación de aire">Renovación de Aire (v/h):</label>
                                         <select onchange="this.parentElement.querySelector('.room-renov').value = this.value; calculate()" class="font-semibold text-[11px] !p-2 text-[var(--text-primary)] w-full mb-3 border border-[var(--border-default)] rounded bg-[var(--bg-surface)]">
-                                            <option value="2.0">Viviendas - Cocinas/Baños (2.0 v/h)</option>
-                                            <option value="0.5">Viviendas - Dormitorios/Salones (0.5 v/h)</option>
                                             <option value="6.0">Garajes/Extracción (6.0 v/h)</option>
                                             <option value="4.0">Gimnasios/Locales alta ocupación (4.0 v/h)</option>
                                             <option value="3.0">RITE IDA 1 - Sanidad/Guarderías (3.0 v/h)</option>
                                             <option value="2.5">RITE IDA 2 - Aulas/Salas Reunión (2.5 v/h)</option>
                                             <option value="1.5">RITE IDA 2 - Oficinas/Bibliotecas (1.5 v/h)</option>
                                             <option value="1.0" selected>RITE IDA 3 - Comercial/Zonas Comunes (1.0 v/h)</option>
+                                            <option value="2.0">Viviendas - Cocinas/Baños (2.0 v/h)</option>
+                                            <option value="0.5">Viviendas - Dormitorios/Salones (0.5 v/h)</option>
                                         </select>
                                         <div class="flex gap-2 items-center">
                                             <label class="text-[10px] font-bold text-[var(--text-muted)] uppercase whitespace-nowrap">Valor Manual:</label>
