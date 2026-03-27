@@ -351,11 +351,14 @@
                         
                         <!-- Dimensionado Caudal -->
                         <div class="p-4 bg-[var(--bg-surface)] rounded-lg border border-[var(--border-default)] shadow-sm flex flex-col justify-between">
-                            <div class="flex justify-between items-center mb-1">
+                            <div class="flex justify-between items-start mb-1">
                                 <p class="text-[10px] uppercase text-cyan-500 font-bold" title="Caudal necesario para abatir la carga sensible calculada">Caudal Impulsión (Frío)</p>
-                                <div class="flex items-center gap-1">
-                                    <label class="text-[9px] text-[var(--text-muted)]">ΔT (°C):</label>
-                                    <input type="number" id="caudal_dt" value="12" step="0.5" oninput="calculate()" class="!w-16 !p-1 text-xs text-center font-mono font-bold text-[var(--text-primary)] border border-[var(--border-default)]">
+                                <div class="flex flex-col items-end gap-1">
+                                    <div class="flex items-center gap-1">
+                                        <label class="text-[9px] text-[var(--text-muted)]" title="Temp. de salida de la máquina">T. Impul. (°C):</label>
+                                        <input type="number" id="t_impulsion" value="13" step="0.5" oninput="calculate()" class="!w-16 !p-1 text-xs text-center font-mono font-bold text-[var(--text-primary)] border border-[var(--border-default)]">
+                                    </div>
+                                    <div class="text-[8px] text-[var(--text-muted)] font-mono font-bold bg-[var(--bg-alt)] px-1 rounded" id="label_dt_dinamico">ΔT = 12.0 °C</div>
                                 </div>
                             </div>
                             <div class="text-xl font-mono text-cyan-500 bg-[var(--bg-alt)] border border-[var(--border-subtle)] p-2 rounded-lg text-center shadow-inner technical-font mb-2" id="total_caudal">0 m³/h</div>
@@ -1009,13 +1012,18 @@
             if(tWinterK) tWinterK.innerText = Math.round(totalI * 0.86) + " kcal/h";
 
             // Dimensionado Técnico Adicional Inyectado
-            const dtCaudal = parseFloat(document.getElementById('caudal_dt')?.value) || 12;
+            const tImpulsion = parseFloat(document.getElementById('t_impulsion')?.value) || 13;
+            const dtCaudal = Math.max(0.1, tiV - tImpulsion); // Evitar división por cero
+            
+            const labelDt = document.getElementById('label_dt_dinamico');
+            if (labelDt) labelDt.innerText = `ΔT = ${tiV} - ${tImpulsion} = ${dtCaudal.toFixed(1)} °C`;
+
             const caudalVerano = dtCaudal > 0 ? (totalV_sens / (cSens * dtCaudal)) : 0;
             const caudalEl = document.getElementById('total_caudal');
             if(caudalEl) caudalEl.innerText = Math.round(caudalVerano) + " m³/h";
             
             const formCaudal = document.getElementById('formula_caudal');
-            if(formCaudal) formCaudal.innerHTML = `V = ${Math.round(totalV_sens)}W (Sens) / (${csStr} · ${dtCaudal}K) = <strong>${Math.round(caudalVerano)} m³/h</strong>`;
+            if(formCaudal) formCaudal.innerHTML = `V = ${Math.round(totalV_sens)}W (Sens) / (${csStr} · ${dtCaudal.toFixed(1)}K) = <strong>${Math.round(caudalVerano)} m³/h</strong>`;
 
             // Energía Renovable Aerotermia (CTE DB-HE4)
             const spf = parseFloat(document.getElementById('renovable_spf')?.value) || 3.5;
@@ -1079,7 +1087,8 @@
                     uMuro: document.getElementById('u_muro')?.value,
                     uVentana: document.getElementById('u_ventana')?.value,
                     uSuelo: document.getElementById('u_suelo')?.value,
-                    uTecho: document.getElementById('u_techo')?.value
+                    uTecho: document.getElementById('u_techo')?.value,
+                    tImp: document.getElementById('t_impulsion')?.value
                 },
                 rooms: []
             };
@@ -1138,7 +1147,8 @@
                     uMuro: document.getElementById('u_muro')?.value,
                     uVentana: document.getElementById('u_ventana')?.value,
                     uSuelo: document.getElementById('u_suelo')?.value,
-                    uTecho: document.getElementById('u_techo')?.value
+                    uTecho: document.getElementById('u_techo')?.value,
+                    tImp: document.getElementById('t_impulsion')?.value
                 },
                 rooms: []
             };
@@ -1188,6 +1198,10 @@
                 if (data.config.uVentana !== undefined) document.getElementById('u_ventana').value = data.config.uVentana;
                 if (data.config.uSuelo !== undefined) document.getElementById('u_suelo').value = data.config.uSuelo;
                 if (data.config.uTecho !== undefined) document.getElementById('u_techo').value = data.config.uTecho;
+                if (data.config.tImp !== undefined) {
+                    const tImpEl = document.getElementById('t_impulsion');
+                    if(tImpEl) tImpEl.value = data.config.tImp;
+                }
             }
 
             // Restore Rooms
